@@ -36,6 +36,8 @@ const root = path.resolve(__dirname,'..');
           missionBeforeArena:document.querySelector('.mission').getBoundingClientRect().top<document.querySelector('#scene').getBoundingClientRect().top,
           camera:[...document.querySelectorAll('.camera-controls button')].map(el=>({w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height}))}));
         assert.ok(layout.scroll<=width,`${room} overflows at ${width}: ${layout.scroll}`);
+        const smallest=await page.evaluate(()=>Math.min(...[...document.querySelectorAll('#scene text')].filter(t=>t.getBoundingClientRect().height>0).map(t=>parseFloat(getComputedStyle(t).fontSize)*t.getScreenCTM().a)));
+        assert.ok(smallest>=11.5,`${room} ${width}: smallest SVG text ${smallest.toFixed(1)}px`);
         assert.notEqual(layout.principle,'none');assert.ok(layout.missionBeforeArena);
         assert.ok(parseFloat(layout.text)>=14);
         assert.ok(layout.camera.every(box=>box.w>=44&&box.h>=44));

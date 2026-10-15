@@ -218,3 +218,12 @@ test('Transfer explains peek, push, then pop and why the source changes last',()
   assert.match(element('feedback').innerHTML,/peek sumber → push tujuan → pop sumber/);
   assert.match(element('memory-context').textContent,/peek Rak A → D/);
 });
+
+test('World labels scale up to stay readable and phones start focused',()=>{
+  const {context}=view();
+  assert.equal(vm.runInContext('labelScale(1.3)',context),1);
+  assert.equal(vm.runInContext('labelScale(0.47)',context),2.2);
+  assert.equal(vm.runInContext('labelScale(0.8)',context),1.5);
+  assert.equal(vm.runInContext('defaultZoom()',context),1.4,'sink matchMedia matches → phone default');
+  assert.equal(vm.runInContext('camera.zoom',view({reducedMotion:false}).context),1,'desktop starts at 100%');
+});

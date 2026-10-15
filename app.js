@@ -16,12 +16,22 @@ const rackPositions = [[278,335],[470,431],[684,333]];
 const completedMissions = new Set();
 const drafts = {stack:{},queue:{}};
 let capacityDrafts = [{},{},{}];
-const camera = {zoom:1,focus:false};
 let motionSpeed = 1, keyboardInput = false, drag = null, suppressClick = false, achievementTimer = null;
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
 // Arena motion explains state changes, so keyboard users keep it; only button transitions follow keyboard mode (CSS).
 const motionAllowed = () => !document.body.classList.contains('reduced-motion') && !motionPreference.matches;
+const phone = matchMedia('(max-width:540px)');
+const defaultZoom = () => phone.matches ? 1.4 : 1;
+// Scale SVG text so its smallest size (10 user units) renders at ≥12px; capped to limit overlap.
+function labelScale(ctmA, minPx = 12, smallest = 10, max = 2.2) { return Math.min(max, Math.max(1, Math.round(minPx / (smallest * ctmA) * 100) / 100)); }
+function fitSceneText() {
+  const world = $('world'); if (!world?.getScreenCTM) return;
+  const k = labelScale(world.getScreenCTM().a);
+  document.querySelectorAll('#scene text').forEach(t => { const base = Number(t.getAttribute('font-size')) || 12; t.style.fontSize = `${base * k}px`; });
+}
+globalThis.addEventListener?.('resize', fitSceneText);
+const camera = {zoom:defaultZoom(),focus:false}; camera.focus = camera.zoom > 1;
 let feedback = { text:'Pilih rak, lalu coba push atau pop. Amati perubahan top pada linked-list.', error:false };
 const edited = {stack:false,queue:false};
 let pendingReplacement = null;
@@ -168,7 +178,7 @@ function block(x,y,a,b,h,palette, extra = '') {
   const [top,left,right] = palette;
   return `<g ${extra}><polygon points="${x-a},${y-b-h} ${x},${y-h} ${x},${y} ${x-a},${y-b}" fill="${left}"/><polygon points="${x},${y-h} ${x+a},${y-b-h} ${x+a},${y-b} ${x},${y}" fill="${right}"/><polygon class="box-top" points="${x-a},${y-b-h} ${x},${y-2*b-h} ${x+a},${y-b-h} ${x},${y-h}" fill="${top}" stroke="${left}" stroke-width=".7"/></g>`;
 }
-function svgLabel(x,y,text,cls='svg-label',anchor='middle') { return `<text x="${x}" y="${y}" text-anchor="${anchor}" class="${cls}">${escape(text)}</text>`; }
+function svgLabel(x,y,text,cls='svg-label',anchor='middle') { return `<text x="${x}" y="${y}" text-anchor="${anchor}" class="${cls}" font-size="${cls==='svg-small'?10:12}">${escape(text)}</text>`; }
 function floor() {
   let grid = '';
   for(let i=0;i<=8;i++) {
@@ -199,7 +209,7 @@ function renderStackScene() {
       const selected = selectedItem===p.id;
       content += `<g class="svg-item ${selected?'selected':''} ${i===values.length-1?'svg-draggable':''}" data-entity="${escape(p.id)}" data-item="${escape(p.id)}" data-rack="${ri}" role="button" tabindex="0" aria-label="${escape(p.id)}, ${escape(p.name)}, ${p.weight} kilogram, ${i===values.length-1?'teratas, dapat diseret ke rak lain':'tertimbun'}">`;
       content += block(x,base,53,27,32,palette);
-      content += `<path class="box-edge" d="M${x-53} ${base-59}l53 27 53-27M${x} ${base-32}v32"/><path d="m${x-33} ${base-61} 33-17 33 17-33 17Z" fill="#ffffff26" stroke="#ffffff50" stroke-width=".7"/><path d="M${x+37} ${base-50}v17m5-20v17" stroke="#c6f5fa" stroke-width="2"/><polygon points="${x-40},${base-47} ${x-12},${base-33} ${x-12},${base-16} ${x-40},${base-30}" fill="#f6f9ff"/><text x="${x-26}" y="${base-29}" text-anchor="middle" fill="#2f39a9" font-size="11" font-weight="500" transform="rotate(27 ${x-26} ${base-29})">${escape(p.id.length>4?p.id.slice(0,3)+'…':p.id)}</text>`;
+      content += `<path class="box-edge" d="M${x-53} ${base-59}l53 27 53-27M${x} ${base-32}v32"/><path d="m${x-33} ${base-61} 33-17 33 17-33 17Z" fill="#ffffff26" stroke="#ffffff50" stroke-width=".7"/><path d="M${x+37} ${base-50}v17m5-20v17" stroke="#c6f5fa" stroke-width="2"/><rect x="${x-15}" y="${base-26}" width="30" height="17" rx="3" fill="#ffffffe0"/><text x="${x}" y="${base-13}" text-anchor="middle" fill="#2f39a9" font-size="11" font-weight="500">${escape(p.id.length>4?p.id.slice(0,3)+'…':p.id)}</text>`;
       if(isTarget) content += `<path class="target-ring" d="M${x-57},${base-60} ${x},${base-89} ${x+57},${base-60} ${x},${base-30}Z"/>`;
       content += '</g>';
     });
@@ -348,7 +358,7 @@ function applyCamera(animate=true, previous=null) {
   if(animate&&changed&&motionAllowed())world.animate([{transform:before},{transform:target}],{duration:260/motionSpeed,easing:'cubic-bezier(.16,1,.3,1)'});
   $('zoom-level').textContent=`${Math.round(camera.zoom*100)}%`;
   $('zoom-in').disabled=camera.zoom>=1.8;$('zoom-out').disabled=camera.zoom<=1;
-  $('focus-object').setAttribute('aria-pressed',String(camera.focus));return changed;
+  $('focus-object').setAttribute('aria-pressed',String(camera.focus));fitSceneText();return changed;
 }
 function renderHUD() {
   if(room==='stack'){
@@ -412,7 +422,7 @@ function render() {
     const selected=button.dataset.mode?button.dataset.mode===queueMode:button.dataset.item?button.dataset.item===selectedItem:button.dataset.patient?button.dataset.patient===selectedPatient:button.dataset.rack!==undefined?Number(button.dataset.rack)===rack:Number(button.dataset.queue)===selectedQueue;
     button.setAttribute('aria-pressed',String(selected));
   });
-  const cameraMoved=applyCamera(sameRoom,oldTransform);animateScene(oldPositions,cameraMoved);
+  const cameraMoved=applyCamera(sameRoom,oldTransform);fitSceneText();animateScene(oldPositions,cameraMoved);
   drawnRoom=room;
   renderNodes();renderMission();renderHUD();renderFeedback();renderTrace();renderLog();renderWarmup();
   if(lastObject&&motionAllowed())document.querySelector(`[data-node="${CSS.escape(lastObject)}"]`)?.animate([{opacity:.4,transform:'translateX(-10px)'},{opacity:1,transform:'translateX(0)'}],{duration:200/motionSpeed,easing:'cubic-bezier(.16,1,.3,1)'});
@@ -498,7 +508,7 @@ document.addEventListener('click',event=>{
   }
   if(button.dataset.warmupReset){warmups[room]=newWarmup(room);renderWarmup();document.querySelector('#warmup-choices button')?.focus({preventScroll:true});return;}
   if(button.dataset.room) {
-    endDrag();room=button.dataset.room;camera.zoom=1;camera.focus=false;stopTrace();trace=null;clearTimeout(achievementTimer);$('achievement').hidden=true;feedback={text:room==='stack'?'Pilih rak, lalu coba push atau pop.':'Pilih pasien untuk melihat estimasi tunggu. Panggil pasien saat loket tersedia.',error:false};render();return;
+    endDrag();room=button.dataset.room;camera.zoom=defaultZoom();camera.focus=camera.zoom>1;stopTrace();trace=null;clearTimeout(achievementTimer);$('achievement').hidden=true;feedback={text:room==='stack'?'Pilih rak, lalu coba push atau pop.':'Pilih pasien untuk melihat estimasi tunggu. Panggil pasien saat loket tersedia.',error:false};render();return;
   }
   if(button.dataset.mode) {
     if(queueMode!==button.dataset.mode) replaceExperiment('Mengganti mode akan mengganti seluruh antrean dengan data contoh, mengosongkan laporan, dan menghentikan pelayanan saat ini.',()=>{queueMode=button.dataset.mode;missions.queue={active:false};drafts.queue={};seedQueue();stopTrace();trace=null;edited.queue=false;notify('Mode diubah. Antrean dimuat ulang untuk eksperimen baru.');render();});return;
@@ -597,7 +607,7 @@ $('start-mission').addEventListener('click',()=>replaceExperiment('Memulai atau 
   if(room==='stack'){missions.stack={active:true,removed:false,cleared:false};seedStack(true);}else{queueMode='priority';missions.queue={active:true,critical:false,servedCritical:false,fifo:false,cancelled:false};seedQueue(true);}
   notify(room==='stack'?'Misi dimulai. Cari B, pindahkan D lalu C ke Bantuan, kemudian ambil B.':'Misi dimulai. Daftarkan P04 sebagai kritis melalui registrasi.',false,'misi()');render();
 }));
-$('reset').addEventListener('click',()=>replaceExperiment('Atur ulang akan mengganti isi ruang ini dengan data contoh dan mengakhiri misi yang berjalan.',()=>{endDrag();stopTrace();trace=null;drafts[room]={};camera.zoom=1;camera.focus=false;clearTimeout(achievementTimer);$('achievement').hidden=true;missions[room]={active:false};if(room==='stack')seedStack();else seedQueue();edited[room]=false;notify('Ruang diatur ulang. Data contoh siap digunakan.',false,'reset()');render();}));
+$('reset').addEventListener('click',()=>replaceExperiment('Atur ulang akan mengganti isi ruang ini dengan data contoh dan mengakhiri misi yang berjalan.',()=>{endDrag();stopTrace();trace=null;drafts[room]={};camera.zoom=defaultZoom();camera.focus=camera.zoom>1;clearTimeout(achievementTimer);$('achievement').hidden=true;missions[room]={active:false};if(room==='stack')seedStack();else seedQueue();edited[room]=false;notify('Ruang diatur ulang. Data contoh siap digunakan.',false,'reset()');render();}));
 $('replace-confirm').addEventListener('close',()=>{
   const action=pendingReplacement;pendingReplacement=null;
   if($('replace-confirm').returnValue==='replace')action?.();
@@ -614,7 +624,7 @@ $('reduce-motion').addEventListener('change',event=>{document.body.classList.tog
 $('zoom-in').addEventListener('click',()=>{camera.zoom=Math.min(1.8,Math.round((camera.zoom+.2)*10)/10);applyCamera();});
 $('zoom-out').addEventListener('click',()=>{camera.zoom=Math.max(1,Math.round((camera.zoom-.2)*10)/10);applyCamera();});
 $('focus-object').addEventListener('click',()=>{camera.focus=!camera.focus;if(camera.focus)camera.zoom=Math.max(1.4,camera.zoom);applyCamera();});
-$('reset-camera').addEventListener('click',()=>{camera.zoom=1;camera.focus=false;applyCamera();});
+$('reset-camera').addEventListener('click',()=>{camera.zoom=defaultZoom();camera.focus=camera.zoom>1;applyCamera();});
 $('motion-speed').addEventListener('change',()=>{motionSpeed=Number($('motion-speed').value);const playing=!!traceTimer;stopTrace();if(playing)playTrace();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){stopTrace();endDrag();document.getAnimations().forEach(a=>a.cancel());}});
 $('trace-prev').addEventListener('click',()=>{stopTrace();if(trace&&trace.steps.indexOf(traceIndex)>0)traceIndex=trace.steps[trace.steps.indexOf(traceIndex)-1];renderTrace();});
