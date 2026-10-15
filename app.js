@@ -6,7 +6,10 @@ const $ = id => document.getElementById(id);
 const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const rackNames = ['Rak A', 'Rak B', 'Bantuan'];
 const priorityNames = ['Kritis', 'Darurat', 'Non-darurat'];
-const colors = [ ['#8790e7','#5560c5','#2f39a9'], ['#87bbdf','#5198c8','#2e6fa0'], ['#a0d9e6','#68b8cb','#49a4bb'], ['#91efdc','#43dabc','#10ab90'] ];
+// Colour encodes state, never identity: one neutral box hue, amber for goals, triage colours for patient priority.
+const boxPalette = ['#8790e7','#5560c5','#2f39a9'], goalPalette = ['#e9b25a','#c98a1e','#9a6410'];
+const priorityShades = [['#d27b86','#b24555'],['#d9a04a','#b9730f'],['#7dbccc','#2f8aa0']];
+const laneFills = ['#fbe9ec','#fbf1e0','#e2f4f8'], laneStrokes = ['#b24555','#b9730f','#2f8aa0'];
 let room = 'stack', racks, clinic, rack = 0, selectedItem = null, selectedPatient = null, selectedQueue = 0;
 let queueMode = 'priority', serial = 7, patientSerial = 6, operationCount = 0, lastObject = null;
 let missions = { stack: { active:false }, queue: { active:false } };
@@ -196,7 +199,7 @@ function floor() {
     const t=i/8;
     grid += `<path d="M${460-355*t},${149+188*t} L${845-355*t},${347+188*t} M${460+385*t},${149+198*t} L${105+385*t},${337+198*t}"/>`;
   }
-  return `<defs><filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8"/></filter><linearGradient id="floor-material" x2="0" y2="1"><stop stop-color="#f9fbff"/><stop offset="1" stop-color="#e2e8f3"/></linearGradient></defs><ellipse cx="476" cy="396" rx="353" ry="80" fill="#384e8a" opacity=".12" filter="url(#shadow)"/><polygon points="105,347 490,545 845,357 460,159" fill="#c0cbdf"/><polygon points="105,337 490,535 845,347 460,149" fill="url(#floor-material)" stroke="#b6c7e0"/><g stroke="#c6d6ed" stroke-width=".8" opacity=".7">${grid}</g><path d="M113 337 490 531 837 347" fill="none" stroke="#49a4bb" stroke-width="2"/><path d="M129 337 186 366m536 47 81-44" stroke="#15d8b3" stroke-width="3" fill="none"/>`;
+  return `<defs><filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8"/></filter><linearGradient id="floor-material" x2="0" y2="1"><stop stop-color="#f9fbff"/><stop offset="1" stop-color="#e2e8f3"/></linearGradient></defs><ellipse cx="476" cy="396" rx="353" ry="80" fill="#384e8a" opacity=".12" filter="url(#shadow)"/><polygon points="105,347 490,545 845,357 460,159" fill="#c0cbdf"/><polygon points="105,337 490,535 845,347 460,149" fill="url(#floor-material)" stroke="#b6c7e0"/><g stroke="#c6d6ed" stroke-width=".8" opacity=".7">${grid}</g><path d="M113 337 490 531 837 347" fill="none" stroke="#2f8aa0" stroke-width="2"/><path d="M129 337 186 366m536 47 81-44" stroke="#15d8b3" stroke-width="3" fill="none"/>`;
 }
 function renderStackScene() {
   const positions = rackPositions;
@@ -216,7 +219,7 @@ function renderStackScene() {
     const values = s.values().slice(0,6).reverse();
     values.forEach((p,i)=>{
       const base = y-10-i*35; const isTarget = p.id==='B'&&missions.stack.active;
-      const palette = isTarget?colors[3]:colors[(p.id.charCodeAt(0)+1)%3];
+      const palette = isTarget?goalPalette:boxPalette;
       const selected = selectedItem===p.id;
       content += `<g class="svg-item ${selected?'selected':''} ${i===values.length-1?'svg-draggable':''}" data-entity="${escape(p.id)}" data-item="${escape(p.id)}" data-rack="${ri}" role="button" tabindex="0" aria-label="${escape(p.id)}, ${escape(p.name)}, ${p.weight} kilogram, ${i===values.length-1?'teratas, dapat diseret ke rak lain':'tertimbun'}">`;
       content += block(x,base,53,27,32,palette);
@@ -234,9 +237,9 @@ function renderStackScene() {
   $('scene').innerHTML = `<title id="scene-title">Gudang isometrik. Pilih rak atau barang. Seret barang teratas untuk memindahkannya.</title><g id="world">${content}</g>`;
 }
 function person(x,y,patient,rank,selected=false,active=false) {
-  const shades=[['#666ed0','#2f39a9'],['#69a7cc','#2e6fa0'],['#8bc8d7','#49a4bb']][rank];
+  const shades=priorityShades[rank];
   const label = `${patient.id}, ${patient.name}, ${priorityNames[rank]}`;
-  return `<g class="svg-item ${selected?'selected':''}" data-entity="${escape(patient.id)}" ${active?'':`role="button" tabindex="0" data-patient="${escape(patient.id)}" data-queue="${rank}" aria-label="${escape(label)}"`}><ellipse class="patient-halo" cx="${x}" cy="${y}" rx="20" ry="10" fill="${selected?'#a0efdd':'#b7c8e5'}" opacity=".7"/><path d="M${x-6} ${y-20}v18m12-18v18" stroke="#3b4c71" stroke-width="7" stroke-linecap="round"/><path d="M${x-12} ${y-46}q12-8 24 0v26q-12 6-24 0Z" fill="${shades[0]}"/><path d="M${x+4} ${y-49}l8 3v26l-8 3Z" fill="${shades[1]}"/><path d="M${x-14} ${y-42}l-3 21m31-21 3 21" stroke="${shades[1]}" stroke-width="7" stroke-linecap="round"/><path d="M${x-7} ${y-42}h5v5h-5Z" fill="#f1f8ff"/><circle cx="${x}" cy="${y-60}" r="11" fill="#e4bea0"/><path d="M${x-10} ${y-62}q-1-14 10-13q12 0 11 14q-11-5-21-1" fill="#37446a"/><rect x="${x-19}" y="${y+10}" width="38" height="18" rx="4" fill="white" stroke="#cfdaed"/><text x="${x}" y="${y+23}" text-anchor="middle" font-size="10" fill="#2e6fa0">${escape(patient.id.length>5?patient.id.slice(0,4)+'…':patient.id)}</text></g>`;
+  return `<g class="svg-item ${selected?'selected':''}" data-priority="${priorities[rank]}" data-entity="${escape(patient.id)}" ${active?'':`role="button" tabindex="0" data-patient="${escape(patient.id)}" data-queue="${rank}" aria-label="${escape(label)}"`}><ellipse class="patient-halo" cx="${x}" cy="${y}" rx="20" ry="10" fill="${selected?'#a0efdd':'#b7c8e5'}" opacity=".7"/><path d="M${x-6} ${y-20}v18m12-18v18" stroke="#3b4c71" stroke-width="7" stroke-linecap="round"/><path d="M${x-12} ${y-46}q12-8 24 0v26q-12 6-24 0Z" fill="${shades[0]}"/><path d="M${x+4} ${y-49}l8 3v26l-8 3Z" fill="${shades[1]}"/><path d="M${x-14} ${y-42}l-3 21m31-21 3 21" stroke="${shades[1]}" stroke-width="7" stroke-linecap="round"/><path d="M${x-7} ${y-42}h5v5h-5Z" fill="#f1f8ff"/><circle cx="${x}" cy="${y-60}" r="11" fill="#e4bea0"/>${rank===0?`<path d="M${x-4} ${y-80}h8m-4-4v8" stroke="#b24555" stroke-width="2.5" stroke-linecap="round"/>`:rank===1?`<path d="M${x} ${y-84}l4 7h-8Z" fill="#b9730f"/>`:''}<path d="M${x-10} ${y-62}q-1-14 10-13q12 0 11 14q-11-5-21-1" fill="#37446a"/><rect x="${x-19}" y="${y+10}" width="38" height="18" rx="4" fill="white" stroke="${laneStrokes[rank]}" stroke-width="1.5"/><text x="${x}" y="${y+23}" text-anchor="middle" font-size="10" fill="#2e6fa0">${escape(patient.id.length>5?patient.id.slice(0,4)+'…':patient.id)}</text></g>`;
 }
 function renderQueueScene() {
   let content = floor();
@@ -248,7 +251,7 @@ function renderQueueScene() {
   const lanes = queueMode==='fifo'?[2]:[0,1,2];
   lanes.forEach(rank=>{
     const y0=queueMode==='fifo'?399:327+rank*40; const x0=queueMode==='fifo'?449:382+rank*75;
-    content += `<g class="svg-item" role="button" tabindex="0" data-queue="${rank}" aria-label="Lihat antrean ${queueMode==='fifo'?'FIFO':priorityNames[rank]}"><path class="platform-outline" d="M${x0-32},${y0+9}l226-119 36 18-226 119Z" fill="${['#e2e5fb','#e0effa','#e2f4f8'][rank]}" stroke="${rank===selectedQueue?'#49a4bb':'#b6c8e5'}" stroke-width="${rank===selectedQueue?'2':'1'}"/><path d="M${x0},${y0+8}l184-98" stroke="${['#2f39a9','#2e6fa0','#49a4bb'][rank]}" opacity=".45" stroke-width="1.3" stroke-dasharray="5 6"/></g>`;
+    content += `<g class="svg-item" role="button" tabindex="0" data-queue="${rank}" aria-label="Lihat antrean ${queueMode==='fifo'?'FIFO':priorityNames[rank]}"><path class="platform-outline" d="M${x0-32},${y0+9}l226-119 36 18-226 119Z" fill="${laneFills[rank]}" stroke="${rank===selectedQueue?'#0e9e82':'#b6c8e5'}" stroke-width="${rank===selectedQueue?'2':'1'}"/><path d="M${x0},${y0+8}l184-98" stroke="${laneStrokes[rank]}" opacity=".45" stroke-width="1.3" stroke-dasharray="5 6"/></g>`;
     const values=clinic.queues[rank].values();
     values.slice(0,5).reverse().forEach((p,rev)=>{const i=Math.min(5,values.length)-1-rev; content+=person(x0+i*40,y0-i*21,p,rank,p.id===selectedPatient);});
     if(!values.length) content+=svgLabel(x0+70,y0-36,'Antrean kosong','svg-small');
@@ -422,7 +425,7 @@ function render() {
   $('scene-summary').textContent=room==='stack'?'3 rak penyimpanan':queueMode==='fifo'?'1 jalur · 1 loket':'3 jalur · 1 loket';
   $('scene-hint').innerHTML=`${icon(room==='stack'?'hand':'focus')}${room==='stack'?'Seret barang teratas ke rak lain':'Pilih pasien untuk mengamati antrean'}`;
   $('scene-caption').textContent=room==='stack'?'Kotak paling atas adalah pintu masuk dan keluar Stack.':'Pasien baru masuk dari rear. Pelayanan mengambil dari front.';
-  document.querySelector('.scene-legend').innerHTML=room==='stack'?'<i class="legend-item"></i> Barang <i class="legend-target"></i> Target misi':'<i style="background:#2f39a9"></i> Kritis <i style="background:#2e6fa0"></i> Darurat <i style="background:#49a4bb"></i> Non-darurat';
+  document.querySelector('.scene-legend').innerHTML=room==='stack'?'<i class="legend-item"></i> Barang <i class="legend-target"></i> Target misi':'<i style="background:#b24555"></i> Kritis + <i style="background:#b9730f"></i> Darurat ▲ <i style="background:#2f8aa0"></i> Non-darurat';
   if(room==='stack'){renderStackScene();renderStackControls();}else{renderQueueScene();renderQueueControls();}
   const values={...drafts[room],...(room==='stack'?capacityDrafts[rack]:{})};
   for(const [id,value] of Object.entries(values)){

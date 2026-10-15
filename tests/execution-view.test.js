@@ -237,3 +237,15 @@ test('Each trace frame names the arena objects it points at',()=>{
   assert.ok(ids[1].includes('G07'),'new_node is highlighted once created');
   assert.deepEqual(ids.at(-1),['G07'],'top ends on the pushed item');
 });
+
+test('Colour carries meaning: neutral boxes, amber target, triage colours for priorities',()=>{
+  const {element,action,click}=view();
+  assert.doesNotMatch(element('scene').innerHTML,/#87bbdf|#a0d9e6/,'stack boxes must not use per-id hues');
+  click('start-mission');
+  assert.match(element('scene').innerHTML,/#c98a1e/i,'mission target uses the goal palette');
+  action({room:'queue'});action({mode:'priority'});
+  const queue=element('scene').innerHTML;
+  assert.match(queue,/#b24555/i,'kritis uses the danger colour');
+  assert.match(queue,/#b9730f/i,'darurat uses amber');
+  assert.match(queue,/data-priority="kritis"/,'priority has a non-colour marker');
+});
