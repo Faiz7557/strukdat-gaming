@@ -31,6 +31,8 @@ function labelScale(ctmA, minPx = 12, smallest = 10, max = 2.2) { return Math.mi
 function fitSceneText() {
   const world = $('world'); if (!world?.getScreenCTM) return;
   const k = labelScale(world.getScreenCTM().a);
+  // Enlarged labels no longer fit the rack plates; the same counts stay in the HUD and lens.
+  $('scene').classList.toggle('compact-labels', k > 1.3);
   document.querySelectorAll('#scene text').forEach(t => { const base = Number(t.getAttribute('font-size')) || 12; t.style.fontSize = `${base * k}px`; });
 }
 globalThis.addEventListener?.('resize', fitSceneText);
@@ -232,7 +234,7 @@ function renderStackScene() {
       content += `<g><rect x="${x-23}" y="${ty-14}" width="46" height="21" rx="5" fill="${active?'#2f39a9':'#ffffff'}" stroke="${active?'#2f39a9':'#c6d4eb'}"/><text x="${x}" y="${ty}" text-anchor="middle" font-size="10" font-family="Consolas" fill="${active?'white':'#2e6fa0'}">top</text><path d="M${x},${ty+8}v10" stroke="#49a4bb"/></g>`;
     } else content += svgLabel(x,y-50,'Kosong','svg-small');
     if(s.count>6)content+=svgLabel(x,y+66,`+${s.count-6} barang di bawah`,'svg-small');
-    content += `<g class="svg-item" role="button" tabindex="0" data-rack="${ri}" aria-label="Pilih ${rackNames[ri]}"><rect x="${x-59}" y="${y+14}" width="118" height="40" rx="6" fill="${active?'#2f39a9':'#ffffff'}" stroke="${active?'#2f39a9':'#d0d9eb'}"/><text x="${x}" y="${y+31}" text-anchor="middle" font-size="12" font-weight="500" fill="${active?'white':'#344e77'}">${rackNames[ri]}</text><text x="${x}" y="${y+45}" text-anchor="middle" font-size="10" fill="${active?'#d7e3ff':'#596e8f'}">${s.count} / ${s.maxItems} barang · ${s.weight} kg</text></g>`;
+    content += `<g class="svg-item" role="button" tabindex="0" data-rack="${ri}" aria-label="Pilih ${rackNames[ri]}"><rect x="${x-59}" y="${y+14}" width="118" height="40" rx="6" fill="${active?'#2f39a9':'#ffffff'}" stroke="${active?'#2f39a9':'#d0d9eb'}"/><text x="${x}" y="${y+31}" text-anchor="middle" font-size="12" font-weight="500" fill="${active?'white':'#344e77'}">${rackNames[ri]}</text><text x="${x}" y="${y+45}" text-anchor="middle" class="rack-meta" font-size="10" fill="${active?'#d7e3ff':'#596e8f'}">${s.count} / ${s.maxItems} barang · ${s.weight} kg</text></g>`;
   });
   $('scene').innerHTML = `<title id="scene-title">Gudang isometrik. Pilih rak atau barang. Seret barang teratas untuk memindahkannya.</title><g id="world">${content}</g>`;
 }
