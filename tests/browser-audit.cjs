@@ -127,6 +127,7 @@ const root = path.resolve(__dirname,'..');
     await page.setViewportSize({width:1440,height:1000});
     await page.locator('[data-room="stack"]:visible').first().click();
     await page.locator('#start-mission').click();
+    for(let i=0;i<3;i++)await page.locator('#mission-hint').click();
     await page.locator('#controls [data-predict="A"]').click();
     assert.match(await page.locator('.prediction').innerText(),/Belum tepat/);
     await page.locator('#controls [data-predict="D"]').click();
