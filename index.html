@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F4F5F9"><meta name="description" content="Strukdat Gaming: arena belajar interaktif Stack dan Queue untuk Praktikum 6 dan 7.">
+  <title>Strukdat Gaming</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%232F39A9'/%3E%3Cpath d='M10 15l10-6 10 6v12l-10 6-10-6zm0 0l10 6 10-6M20 21v12' fill='none' stroke='%2315D8B3' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css"><script type="module" src="app.js"></script>
+</head>
+<body>
+  <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
+    <symbol id="i-focus" viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-reset" viewBox="0 0 24 24"><path d="M3 10a9 9 0 1 1 2 8M3 4v6h6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+    <symbol id="i-up" viewBox="0 0 24 24"><path d="M12 20V4m-6 6 6-6 6 6"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-terminal" viewBox="0 0 24 24"><path d="m4 6 6 6-6 6m9 0h7"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 4 12 8-12 8Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 4v16M16 4v16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V3h14l-3 4 3 4H5"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path d="M7 12V7a2 2 0 0 1 4 0v5-8a2 2 0 0 1 4 0v8-5a2 2 0 0 1 4 0v8c0 5-3 7-6 7s-5-2-7-5l-3-4a2 2 0 0 1 3-2l3 3"/></symbol>
+  </defs></svg>
+  <a class="skip" href="#main">Langsung ke simulasi</a>
+  <aside class="rail" aria-label="Navigasi laboratorium">
+    <div class="brand-mark" aria-label="Strukdat Gaming"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 13l12-7 12 7v14l-12 7-12-7zm0 0l12 7 12-7M20 20v14"/></svg></div>
+    <button class="rail-button active" data-room="stack" aria-label="Ruang Stack" title="Ruang Stack"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 7 9-5 9 5-9 5zm0 5 9 5 9-5M3 17l9 5 9-5"/></svg><span>Stack</span></button>
+    <button class="rail-button" data-room="queue" aria-label="Ruang Queue" title="Ruang Queue"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h14m-4-4 4 4-4 4M21 17H7m4-4-4 4 4 4"/></svg><span>Queue</span></button>
+    <button class="rail-button help-button" id="help" aria-label="Panduan penggunaan" title="Panduan penggunaan"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 0 1 6 0c0 2-3 2-3 4m0 3h.01"/></svg><span>Panduan</span></button>
+    <div class="rail-foot">P6 / P7</div>
+  </aside>
+  <div class="shell">
+    <header class="topbar">
+      <a href="./" class="wordmark">Strukdat <span>Gaming</span><small>Belajar lewat aksi.</small></a>
+      <nav class="room-switch" aria-label="Pilih ruang"><button data-room="stack" class="active">Gudang Stack</button><button data-room="queue">Antrean Queue</button></nav>
+      <div class="header-settings"><span class="mission-score" id="mission-score">0 / 2 misi</span><label class="motion-setting"><input type="checkbox" id="reduce-motion"> Gerakan minimal</label></div>
+    </header>
+    <main id="main">
+      <div class="page-heading"><div><div class="heading-line"><h1 id="room-title">Gudang Stack</h1><span id="practicum" class="practicum-tag">Praktikum 6</span></div><p id="room-description">Simpan, pindahkan, dan temukan barang. Pahami apa yang terjadi di balik setiap operasi.</p></div><div class="principle" id="principle"></div></div>
+      <div class="workspace">
+        <section class="simulation" aria-label="Dunia simulasi">
+          <div class="scene-toolbar"><div class="view-label"><span class="live-dot"></span> Arena isometrik <span class="toolbar-divider">/</span><span id="scene-summary">3 rak penyimpanan</span></div><div class="toolbar-actions"><label class="speed-label">Kecepatan<select id="motion-speed" aria-label="Kecepatan animasi"><option value="0.65">0.65×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option></select></label><button class="text-button" id="reset"><svg class="icon"><use href="#i-reset"/></svg>Atur ulang</button></div></div>
+          <div class="scene-wrap"><svg id="scene" viewBox="0 0 940 570" aria-labelledby="scene-title" role="group"><title id="scene-title">Gudang isometrik dengan tiga rak yang dapat dipilih</title></svg><div class="scene-hint" id="scene-hint"></div><div class="camera-controls" role="group" aria-label="Kontrol kamera"><button id="zoom-out" aria-label="Perkecil arena" title="Perkecil"><svg class="icon"><use href="#i-minus"/></svg></button><output id="zoom-level" aria-label="Skala kamera">100%</output><button id="zoom-in" aria-label="Perbesar arena" title="Perbesar"><svg class="icon"><use href="#i-plus"/></svg></button><span></span><button id="focus-object" aria-label="Fokus objek terpilih" aria-pressed="false" title="Fokus objek"><svg class="icon"><use href="#i-focus"/></svg></button><button id="reset-camera" aria-label="Kembalikan kamera" title="Kembalikan kamera"><svg class="icon"><use href="#i-reset"/></svg></button></div><div id="selection-hud" class="selection-hud"></div><div class="scene-achievement" id="achievement" role="status" aria-live="polite" hidden></div></div>
+          <div class="scene-footer"><span id="scene-caption">Kotak paling atas adalah pintu masuk dan keluar Stack.</span><div class="scene-legend"><i class="legend-item"></i> Barang <i class="legend-target"></i> Target misi</div><div id="quick-actions" class="quick-actions" role="group" aria-label="Operasi cepat arena"></div></div>
+          <section class="mission" aria-labelledby="mission-title"><div class="mission-symbol"><svg class="icon"><use href="#i-flag"/></svg></div><div class="mission-copy"><div class="mission-header"><h2 id="mission-title">Misi: ambil barang B</h2><span id="mission-status" class="small-badge">Siap dicoba</span></div><p id="mission-description">Pindahkan penghalang ke rak bantuan, ambil B, lalu kembalikan urutan barang.</p><div class="mission-progress" id="mission-progress"></div><p id="mission-next" class="mission-next"></p></div><button class="secondary" id="start-mission">Mulai misi</button></section>
+          <section class="structure" aria-label="Visualisasi linked-list"><div class="section-heading"><h2>Di balik simulasi</h2><span id="structure-label">Linked-list · Rak A</span></div><div id="nodes" class="nodes"></div><div class="structure-note" id="structure-note">Panah menunjukkan referensi next, dari top menuju dasar rak.</div></section>
+        </section>
+        <aside class="inspector" aria-label="Panel kontrol">
+          <div class="inspector-heading"><svg class="icon inspector-icon"><use href="#i-terminal"/></svg><h2>Kontrol arena</h2><span id="room-number">06</span></div>
+          <div id="controls"></div>
+          <div class="feedback" id="feedback" role="status" aria-live="polite"><span class="feedback-symbol">i</span><p>Pilih operasi untuk mulai bereksperimen.</p></div>
+          <details class="code-panel" open><summary><span>Jejak Python</span><span class="code-language">.py</span></summary><div id="code"></div><div class="trace-control"><button id="trace-prev" aria-label="Baris sebelumnya">←</button><span id="trace-position">Belum ada operasi</span><button id="trace-next" aria-label="Baris berikutnya">→</button><button id="trace-play">▶ Putar</button></div><p id="trace-note">Jalankan operasi untuk melihat langkahnya.</p></details>
+        </aside>
+      </div>
+      <section class="log-section"><div class="section-heading"><h2>Catatan eksperimen</h2><button class="text-button" id="clear-log">Bersihkan catatan</button></div><ol id="log" aria-label="Riwayat operasi"><li class="log-empty">Setiap operasi akan dicatat di sini.</li></ol></section>
+      <footer class="page-footer"><span>Strukdat Gaming <span class="footer-divider">/</span> Praktikum Struktur Data</span><span>Eksplorasi → amati → pahami</span></footer>
+    </main>
+  </div>
+  <dialog id="guide"><div class="dialog-heading"><h2>Masuk arena. Pahami strukturnya.</h2><button id="close-guide" aria-label="Tutup panduan"><svg class="icon"><use href="#i-close"/></svg></button></div><p>Pilih ruang Stack atau Queue. Pilih objek di dunia isometrik, lalu gunakan kontrol arena untuk mengubahnya.</p><ol><li><strong>Eksperimen:</strong> tambah, ambil, atau pindahkan data sesukamu. Barang teratas dapat diseret ke rak lain; tombol Pindahkan melakukan operasi yang sama.</li><li><strong>Kamera:</strong> perbesar arena atau gunakan Fokus objek untuk mengamati rak dan jalur terpilih.</li><li><strong>Misi:</strong> tekan Mulai misi untuk memuat skenario terpandu. Skenario mengganti isi ruang aktif.</li><li><strong>Linked-list:</strong> amati perubahan top, front, rear, dan next setelah operasi.</li><li><strong>Jejak Python:</strong> putar atau telusuri baris kode operasi terakhir. Diagram utama menampilkan hasil akhir; panel jejak memperlihatkan referensi pada setiap langkah.</li></ol><p>Queue memakai satu loket dengan durasi lima menit. Pelayanan berjalan sampai selesai sebelum pasien berikutnya dipanggil. Estimasi tunggu berdasarkan antrean saat ini.</p><p>Gunakan Tab dan Enter untuk memilih objek. Gerakan mengikuti preferensi perangkat dan dapat diminimalkan lewat pengaturan di atas. Data eksperimen berlaku selama halaman terbuka.</p></dialog>
+</body>
+</html>
