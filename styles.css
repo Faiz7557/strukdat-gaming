@@ -246,3 +246,9 @@ strong,b{font-weight:500}
 /* ── v2 · sinkron kode ↔ arena ───────────────────────── */
 .svg-item.trace-focus .box-top,.svg-item.trace-focus .patient-halo{stroke:var(--ref);stroke-width:3}
 .trace-auto{display:flex;align-items:center;gap:6px;font-size:var(--t-meta);color:var(--muted);min-height:44px}
+
+/* ── v2 · warna bermakna ─────────────────────────────── */
+.target-ring{stroke:var(--goal);stroke-width:2.5}
+.scene-legend .legend-target{background:var(--goal)}
+.svg-item.selected .box-top{stroke:var(--select-line);stroke-width:2.5}
+.drop-zone .platform-outline{stroke:var(--select-line)}
