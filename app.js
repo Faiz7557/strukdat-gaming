@@ -20,7 +20,8 @@ const camera = {zoom:1,focus:false};
 let motionSpeed = 1, keyboardInput = false, drag = null, suppressClick = false, achievementTimer = null;
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
-const motionAllowed = () => !keyboardInput && !document.body.classList.contains('reduced-motion') && !motionPreference.matches;
+// Arena motion explains state changes, so keyboard users keep it; only button transitions follow keyboard mode (CSS).
+const motionAllowed = () => !document.body.classList.contains('reduced-motion') && !motionPreference.matches;
 let feedback = { text:'Pilih rak, lalu coba push atau pop. Amati perubahan top pada linked-list.', error:false };
 const edited = {stack:false,queue:false};
 let pendingReplacement = null;
@@ -174,7 +175,7 @@ function floor() {
     const t=i/8;
     grid += `<path d="M${460-355*t},${149+188*t} L${845-355*t},${347+188*t} M${460+385*t},${149+198*t} L${105+385*t},${337+198*t}"/>`;
   }
-  return `<defs><filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8"/></filter><linearGradient id="floor-material" x2="0" y2="1"><stop stop-color="#f9fbff"/><stop offset="1" stop-color="#e2e8f3"/></linearGradient></defs><ellipse cx="476" cy="396" rx="353" ry="80" fill="#384e8a" opacity=".12" filter="url(#shadow)"/><polygon points="105,337 490,535 845,347 460,149" fill="#c0cbdf" transform="translate(0,10)"/><polygon points="105,337 490,535 845,347 460,149" fill="url(#floor-material)" stroke="#b6c7e0"/><g stroke="#c6d6ed" stroke-width=".8" opacity=".7">${grid}</g><path d="M113 337 490 531 837 347" fill="none" stroke="#49a4bb" stroke-width="2"/><path d="M129 337 186 366m536 47 81-44" stroke="#15d8b3" stroke-width="3" fill="none"/>`;
+  return `<defs><filter id="shadow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="8"/></filter><linearGradient id="floor-material" x2="0" y2="1"><stop stop-color="#f9fbff"/><stop offset="1" stop-color="#e2e8f3"/></linearGradient></defs><ellipse cx="476" cy="396" rx="353" ry="80" fill="#384e8a" opacity=".12" filter="url(#shadow)"/><polygon points="105,347 490,545 845,357 460,159" fill="#c0cbdf"/><polygon points="105,337 490,535 845,347 460,149" fill="url(#floor-material)" stroke="#b6c7e0"/><g stroke="#c6d6ed" stroke-width=".8" opacity=".7">${grid}</g><path d="M113 337 490 531 837 347" fill="none" stroke="#49a4bb" stroke-width="2"/><path d="M129 337 186 366m536 47 81-44" stroke="#15d8b3" stroke-width="3" fill="none"/>`;
 }
 function renderStackScene() {
   const positions = rackPositions;
@@ -198,7 +199,7 @@ function renderStackScene() {
       const selected = selectedItem===p.id;
       content += `<g class="svg-item ${selected?'selected':''} ${i===values.length-1?'svg-draggable':''}" data-entity="${escape(p.id)}" data-item="${escape(p.id)}" data-rack="${ri}" role="button" tabindex="0" aria-label="${escape(p.id)}, ${escape(p.name)}, ${p.weight} kilogram, ${i===values.length-1?'teratas, dapat diseret ke rak lain':'tertimbun'}">`;
       content += block(x,base,53,27,32,palette);
-      content += `<path class="box-edge" d="M${x-53} ${base-59}l53 27 53-27M${x} ${base-32}v32"/><path d="m${x-33} ${base-61} 33-17 33 17-33 17Z" fill="#ffffff26" stroke="#ffffff50" stroke-width=".7"/><path d="M${x+37} ${base-50}v17m5-20v17" stroke="#c6f5fa" stroke-width="2"/><polygon points="${x-40},${base-47} ${x-12},${base-33} ${x-12},${base-16} ${x-40},${base-30}" fill="#f6f9ff"/><text x="${x-26}" y="${base-29}" text-anchor="middle" fill="#2f39a9" font-size="11" font-weight="600" transform="rotate(27 ${x-26} ${base-29})">${escape(p.id.length>4?p.id.slice(0,3)+'…':p.id)}</text>`;
+      content += `<path class="box-edge" d="M${x-53} ${base-59}l53 27 53-27M${x} ${base-32}v32"/><path d="m${x-33} ${base-61} 33-17 33 17-33 17Z" fill="#ffffff26" stroke="#ffffff50" stroke-width=".7"/><path d="M${x+37} ${base-50}v17m5-20v17" stroke="#c6f5fa" stroke-width="2"/><polygon points="${x-40},${base-47} ${x-12},${base-33} ${x-12},${base-16} ${x-40},${base-30}" fill="#f6f9ff"/><text x="${x-26}" y="${base-29}" text-anchor="middle" fill="#2f39a9" font-size="11" font-weight="500" transform="rotate(27 ${x-26} ${base-29})">${escape(p.id.length>4?p.id.slice(0,3)+'…':p.id)}</text>`;
       if(isTarget) content += `<path class="target-ring" d="M${x-57},${base-60} ${x},${base-89} ${x+57},${base-60} ${x},${base-30}Z"/>`;
       content += '</g>';
     });
@@ -273,7 +274,7 @@ function renderNodes() {
   const first=room==='stack'?'top':'front';
   $('structure-label').textContent=`Linked-list · ${room==='stack'?rackNames[rack]:queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}`;
   $('nodes').innerHTML=values.length?values.map((p,i)=>`<div data-node="${escape(p.id)}" class="node ${p.id===(room==='stack'?selectedItem:selectedPatient)?'selected':''}">${i===0||room==='queue'&&i===values.length-1?`<span class="pointer-label">${i===0?first:''}${room==='queue'&&i===values.length-1?i===0?' / rear':'rear':''} ↓</span>`:''}<span class="node-data">${escape(p.id)}</span><span class="node-next">next</span></div><span class="arrow">→</span>`).join('')+'<span class="null">None</span>':`<span class="null">${first} → None${room==='queue'?' &nbsp; · &nbsp; rear → None':''}</span>`;
-  $('structure-note').textContent=room==='stack'?'Panah next bergerak dari top menuju dasar rak. Push/pop inti: O(1). Pencarian: O(n). Perekaman node untuk pembelajaran menambah O(n) per langkah.':'Panah next bergerak dari front ke rear. Enqueue/dequeue inti: O(1). Pencarian pembatalan: O(n). Perekaman node untuk pembelajaran menambah O(n) per langkah.';
+  $('structure-note').textContent=room==='stack'?'Panah next bergerak dari top menuju dasar rak. push/pop: O(1). Cari ID: O(n) karena menelusuri node.':'Panah next bergerak dari front ke rear. enqueue/dequeue: O(1). Batalkan pasien: O(n) karena mencari node.';
 }
 function renderMission() {
   const m=missions[room]; let complete=false, stages;
@@ -282,7 +283,7 @@ function renderMission() {
     complete=restored;
     stages=[['Pindahkan penghalang',!!m.cleared],['Ambil B',removed],['Pulihkan urutan',restored]];
     $('mission-title').textContent='Misi: ambil barang B';
-    $('mission-description').textContent=complete?'Berhasil! B keluar, A–C–D kembali pada urutan yang benar.':m.active?'Target B ada di Rak A. Gunakan Bantuan; kembalikan C lalu D setelah B diambil.':'Pindahkan penghalang ke rak bantuan, ambil B, lalu kembalikan urutan barang.';
+    $('mission-description').textContent=complete?'Berhasil! B keluar dan Rak A kembali: top → D → C → A.':m.active?'Target B ada di Rak A. Gunakan Bantuan; kembalikan C lalu D setelah B diambil.':'Pindahkan penghalang ke rak bantuan, ambil B, lalu pulihkan Rak A: top → D → C → A.';
   } else {
     complete=!!(m.critical&&m.servedCritical&&m.fifo&&m.cancelled);
     stages=[['Daftarkan P04 kritis',!!m.critical],['Selesaikan P04',!!m.servedCritical],['Panggil P02',!!m.fifo],['Batalkan P01',!!m.cancelled]];
@@ -315,7 +316,7 @@ function renderMission() {
   $('mission-next').textContent=hint?`Langkah berikut: ${hint}`:'';
   if(complete&&!m.wasComplete){
     completedMissions.add(room);clearTimeout(achievementTimer);
-    $('achievement').innerHTML=`${icon('check')}<div><strong>Misi selesai.</strong><small>${room==='stack'?'B diambil. Urutan A–C–D pulih.':'P04 selesai. P02 dipanggil sebelum P03.'}</small></div>`;
+    $('achievement').innerHTML=`${icon('check')}<div><strong>Misi selesai.</strong><small>${room==='stack'?'B diambil. Rak A pulih: top → D → C → A.':'P04 selesai. P02 dipanggil sebelum P03.'}</small></div>`;
     $('achievement').hidden=false;
     if(motionAllowed())$('achievement').animate([{opacity:0,transform:'translate(-50%, -8px) scale(.97)'},{opacity:1,transform:'translate(-50%, 0) scale(1)'}],{duration:260,easing:'cubic-bezier(.16,1,.3,1)'});
     achievementTimer=setTimeout(()=>$('achievement').hidden=true,3500);
@@ -377,7 +378,7 @@ function animateScene(previous, cameraMoved) {
   });
   for(const [id,old] of previous)if(!visible.has(id)){
     const clone=old.clone;world.append(clone);
-    clone.animate([{transform:'translate(0,0)',opacity:.9},{transform:'translate(0,-65)',opacity:0}],{duration:250/motionSpeed,easing:'cubic-bezier(.16,1,.3,1)'}).finished.then(()=>clone.remove()).catch(()=>clone.remove());
+    clone.animate([{transform:'translate(0px,0px)',opacity:.9},{transform:'translate(0px,-65px)',opacity:0}],{duration:250/motionSpeed,easing:'cubic-bezier(.16,1,.3,1)'}).finished.then(()=>clone.remove()).catch(()=>clone.remove());
   }
 }
 function render() {
