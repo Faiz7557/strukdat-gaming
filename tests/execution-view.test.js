@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { Stack, Clinic, transfer, priorities } from '../model.js';
+import { Stack, Queue, Clinic, transfer, priorities } from '../model.js';
 import { lessons } from '../execution.js';
 
 // A small DOM sink tests event wiring and generated markup without a browser or network.
@@ -23,7 +23,7 @@ function view() {
     activeElement:element('body'),
     addEventListener:(type,handler)=>listeners.set(`document:${type}`,handler),
   };
-  const context = vm.createContext({ document, Stack, Clinic, transfer, priorities, lessons,
+  const context = vm.createContext({ document, Stack, Queue, Clinic, transfer, priorities, lessons,
     matchMedia:()=>({matches:true}),getComputedStyle:()=>({transform:'none'}),
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
   });
@@ -34,6 +34,40 @@ function view() {
   const decide = value => {element('replace-confirm').returnValue=value;listeners.get('replace-confirm:close')();};
   return {element,context,click,action,listeners,decide};
 }
+
+test('Beginner challenges teach LIFO and FIFO with real operations while preserving the arena',()=>{
+  for(const kind of ['stack','queue']){
+    const {element,context,click,action}=view();
+    if(kind==='queue')action({room:'queue'});
+    const scene=element('scene').innerHTML,mission=element('mission-status').textContent;
+    click('toggle-warmup');assert.equal(element('warmup-body').hidden,false);
+    action({warmupNext:'true'});assert.equal(vm.runInContext('warmups[room].step',context),0);
+    action({warmupAnswer:'remove'});
+    assert.match(element('warmup-feedback').textContent,/Belum tepat/);
+    assert.equal(vm.runInContext('warmups[room].structure.count',context),2);
+    action({warmupAnswer:'add'});action({warmupAnswer:'add'});
+    assert.equal(vm.runInContext('warmups[room].structure.count',context),3,'double activation must not add another C');
+    assert.equal(element('warmup-progress').textContent,'1 / 3 selesai');
+    action({warmupNext:'true'});
+    action({warmupAnswer:kind==='stack'?'A':'C'});
+    assert.equal(vm.runInContext('warmups[room].structure.count',context),3);
+    action({warmupAnswer:kind==='stack'?'C':'A'});
+    assert.match(element('warmup-feedback').textContent,/sekarang B/);
+    action({warmupNext:'true'});action({warmupAnswer:'empty'});
+    assert.match(element('warmup-feedback').textContent,/Belum tepat/);
+    action({warmupAnswer:'peek'});
+    assert.equal(element('warmup-progress').textContent,'3 / 3 selesai');
+    assert.equal(vm.runInContext('warmups[room].structure.count',context),2);
+    assert.match(element('warmup-exercise').innerHTML,/Tiga tantangan selesai/);
+    assert.equal(element('scene').innerHTML,scene);assert.equal(element('mission-status').textContent,mission);
+    assert.equal(vm.runInContext('edited[room]',context),false);
+    click('toggle-warmup');click('toggle-warmup');assert.equal(element('warmup-progress').textContent,'3 / 3 selesai');
+    action({room:kind==='stack'?'queue':'stack'});assert.equal(element('warmup-progress').textContent,'0 / 3 selesai');
+    action({room:kind});assert.equal(element('warmup-progress').textContent,'3 / 3 selesai');
+    action({warmupReset:'true'});assert.equal(element('warmup-progress').textContent,'0 / 3 selesai');
+    assert.equal(vm.runInContext('warmups[room].structure.count',context),2);
+  }
+});
 
 test('Push form drives recorded code, escaped memory, clickable lines, and replay without arena mutations',()=>{
   const {element,context,click,listeners}=view();

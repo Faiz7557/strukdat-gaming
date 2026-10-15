@@ -263,6 +263,7 @@
   ],
   "checks": [
     "responsive",
+    "beginner-challenges-both-rooms-keyboard-and-retry",
     "missions-stack-and-queue",
     "stateful-prediction",
     "replacement-cancel-confirm-escape",

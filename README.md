@@ -2,6 +2,8 @@
 
 Web praktikum isometrik 2.5D berbahasa Indonesia untuk **PRAKTIKUM 6 Stack.docx** dan **PRAKTIKUM 7 Queue.docx**. HTML, CSS, dan JavaScript standar; tidak memerlukan instalasi paket atau koneksi internet.
 
+Untuk langkah penggunaan, contoh penyelesaian kedua misi, dan bantuan kendala umum, baca [Panduan Pengguna](PANDUAN-PENGGUNA.md).
+
 ## Membuka aplikasi
 
 Dari folder ini, jalankan:
@@ -13,6 +15,8 @@ node serve.js
 Buka http://127.0.0.1:5174. Server memakai Node.js standar dan hanya menyediakan berkas aplikasi. Aplikasi memakai ES modules sehingga perlu dibuka melalui server HTTP lokal.
 
 ## Isi simulasi
+
+- Tantangan pemula: tiga latihan terpisah untuk Stack dan Queue—menambah data, menebak data yang keluar, serta peek tanpa menghapus. Umpan balik dan diagram langsung, retry tanpa penalti, dan progres per ruang selama tab terbuka.
 
 - Gudang: tiga Stack linked-list, push, pop, peek, isEmpty, pencarian ID, batas jumlah/berat, dan perpindahan barang yang memvalidasi tujuan sebelum mengubah sumber.
 - Misi Stack: ambil B, simpan D dan C pada Stack bantuan, pulihkan A–C–D.

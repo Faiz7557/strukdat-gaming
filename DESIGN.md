@@ -273,3 +273,9 @@ Misi, reset, dan pergantian mode meminta konfirmasi jika eksperimen atau isian s
 Tujuan transfer disimpan selama valid untuk rak sumber. Draft kapasitas disimpan per rak; penambahan barang hanya membersihkan isian formulir barang. Pilihan rak, mode, objek dan jalur memiliki aria-pressed; semua tombol SVG memiliki indikator fokus. Perubahan preferensi reduced motion saat aplikasi terbuka membatalkan animasi yang sedang berjalan.
 
 Lihat AUDIT-UIUX.md untuk temuan, bukti verifikasi, serta batas pengujian.
+
+## Tantangan pemula
+
+Subbagian opsional ditempatkan antara judul ruang dan workspace. Awalnya hanya judul, penjelasan ringkas, progres 0/3, dan tombol Mulai latihan yang terlihat. Saat dibuka, urutan langkah, pertanyaan, tombol jawaban, dan diagram data latihan tampil dalam dua kolom; di bawah 700px menjadi satu kolom. Ketiga langkah memiliki urutan bermakna: menambah, mengeluarkan menurut LIFO/FIFO, lalu membaca tanpa menghapus.
+
+Teks utama 14px, metadata 13px, kontrol minimum 44px. Permukaan dan warna memakai token yang sama dengan arena. Jawaban salah memberi petunjuk dan dapat dicoba kembali; jawaban benar memperbarui diagram melalui model Stack/Queue yang sudah ada. Feedback memiliki status live dan dapat menerima fokus; Tab berikutnya menuju pilihan atau langkah lanjutan. Latihan tidak menambah animasi, penalti, penghitung waktu, ataupun klaim penguasaan materi. Data terpisah dari arena dijelaskan sebelum pengguna mulai.

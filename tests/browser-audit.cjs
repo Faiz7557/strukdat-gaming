@@ -47,6 +47,46 @@ const root = path.resolve(__dirname,'..');
       }
     }
 
+    for(const room of ['stack','queue']){
+      await page.locator(`.rail [data-room="${room}"]`).click();
+      const arena=await page.locator('#scene').innerHTML(),mission=await page.locator('#mission-status').innerText();
+      assert.equal(await page.locator('#warmup-body').isVisible(),false);
+      await page.locator('#toggle-warmup').click();
+      for(const width of [1440,320]){
+        await page.setViewportSize({width,height:1000});
+        await page.locator('.warmup').scrollIntoViewIfNeeded();
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+        for(const button of await page.locator('.warmup button:visible').all()){
+          const box=await button.boundingBox();assert.ok(box.width>=44&&box.height>=44);
+        }
+        await page.screenshot({path:path.join(output,`warmup-${room}-${width}.png`)});
+      }
+      await page.locator('[data-warmup-answer="remove"]').click();
+      assert.match(await page.locator('#warmup-feedback').innerText(),/Belum tepat/);
+      assert.equal(await page.locator('.warmup-data li').count(),2);
+      assert.equal(await page.evaluate(()=>document.activeElement.id),'warmup-feedback');
+      await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(()=>document.activeElement.dataset.warmupAnswer),'add');
+      await page.keyboard.press('Enter');
+      assert.equal(await page.locator('.warmup-data li').count(),3);
+      await page.locator('[data-warmup-next]').click();
+      await page.locator('[data-warmup-answer="B"]').click();
+      assert.equal(await page.locator('.warmup-data li').count(),3);
+      await page.locator(`[data-warmup-answer="${room==='stack'?'C':'A'}"]`).click();
+      assert.equal(await page.locator('.warmup-data li').count(),2);
+      await page.locator('[data-warmup-next]').click();
+      await page.locator('[data-warmup-answer="peek"]').click();
+      assert.equal(await page.locator('#warmup-progress').innerText(),'3 / 3 selesai');
+      assert.equal(await page.locator('.warmup-data li').count(),2);
+      assert.equal(await page.locator('#scene').innerHTML(),arena);
+      assert.equal(await page.locator('#mission-status').innerText(),mission);
+      await page.locator('#toggle-warmup').click();await page.locator('#toggle-warmup').click();
+      assert.equal(await page.locator('#warmup-progress').innerText(),'3 / 3 selesai');
+      await page.locator('[data-warmup-reset]').click();
+      assert.equal(await page.locator('#warmup-progress').innerText(),'0 / 3 selesai');
+      await page.locator('#toggle-warmup').click();
+    }
+    await page.setViewportSize({width:1440,height:1000});
     await page.locator('.rail [data-room="stack"]').click();
     await page.locator('#start-mission').click();
     await page.locator('#controls [data-predict="A"]').click();
@@ -157,7 +197,7 @@ const root = path.resolve(__dirname,'..');
     assert.equal(await touch.evaluate(()=>document.getAnimations().length),0);
     await touchContext.close();
     assert.deepEqual(errors,[]);
-    await writeFile(path.join(output,'results.json'),JSON.stringify({viewports:results,checks:['responsive','missions-stack-and-queue','stateful-prediction','replacement-cancel-confirm-escape','draft-persistence','svg-keyboard-focus','reduced-motion','synthesized-touch-scroll-and-drag'],errors},null,2));
-    console.log(`Browser audit passed: ${results.length} room/viewport combinations, both missions, prediction, replacement, drafts, keyboard focus and reduced motion.`);
+    await writeFile(path.join(output,'results.json'),JSON.stringify({viewports:results,checks:['responsive','beginner-challenges-both-rooms-keyboard-and-retry','missions-stack-and-queue','stateful-prediction','replacement-cancel-confirm-escape','draft-persistence','svg-keyboard-focus','reduced-motion','synthesized-touch-scroll-and-drag'],errors},null,2));
+    console.log(`Browser audit passed: ${results.length} room/viewport combinations, beginner challenges, both missions, prediction, replacement, drafts, keyboard focus, touch and reduced motion.`);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

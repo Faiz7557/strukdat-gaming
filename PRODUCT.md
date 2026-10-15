@@ -12,7 +12,7 @@ Mahasiswa yang mempelajari materi dan tugas Praktikum 6 Stack serta Praktikum 7 
 
 ## Product Purpose
 
-Simulasi interaktif isometrik yang menghubungkan operasi barang/pasien, node linked-list, dan jejak Python. Pengguna dapat bereksperimen dan menyelesaikan dua misi praktikum.
+Simulasi interaktif isometrik yang menghubungkan operasi barang/pasien, node linked-list, dan jejak Python. Pengguna dapat mencoba tiga tantangan pemula per ruang, bereksperimen, dan menyelesaikan dua misi praktikum.
 
 ## Operating Context
 
@@ -36,3 +36,5 @@ Kedua dokumen praktikum sudah dibaca; implementasi dan tes model berada di model
 - Pertahankan LIFO, FIFO per tingkat, dan penanganan kondisi kosong.
 - Perpindahan yang gagal tidak mengubah isi rak sumber.
 - Interaksi langsung memiliki alternatif tombol dan keyboard; gerakan dapat dikurangi.
+
+Tantangan pemula memakai objek Stack/Queue tersendiri dengan tiga langkah berurutan: tambah C, prediksi hasil pop/dequeue, dan peek tanpa penghapusan. Latihan Queue hanya memakai FIFO dasar. Progres per ruang berada di memori tab dan tidak memutasi arena, misi, atau rekaman eksekusi utama.

@@ -1,4 +1,4 @@
-import { Stack, Clinic, transfer, priorities } from './model.js';
+import { Stack, Queue, Clinic, transfer, priorities } from './model.js';
 import { lessons } from './execution.js';
 
 const $ = id => document.getElementById(id);
@@ -46,6 +46,53 @@ function seedQueue(mission = false) {
   for (const [id,name,priority] of data) clinic.register({id,name,priority:queueMode==='fifo'?'non-darurat':priority});
 }
 seedStack(); seedQueue();
+
+function newWarmup(kind) {
+  const structure=kind==='stack'?new Stack():new Queue();
+  for(const id of ['A','B'])structure[kind==='stack'?'push':'enqueue'](item(id,`Data ${id}`,1));
+  return {structure,step:0,answered:false,message:'',error:false};
+}
+const warmups={stack:newWarmup('stack'),queue:newWarmup('queue')};
+let warmupOpen=false;
+
+function renderWarmup() {
+  const state=warmups[room],stack=room==='stack',values=state.structure.values();
+  const add=stack?'push':'enqueue',remove=stack?'pop':'dequeue',done=state.step+Number(state.answered);
+  $('warmup-title').textContent=`Tantangan pemula · ${stack?'Stack':'Queue'}`;
+  $('warmup-progress').textContent=`${done} / 3 selesai`;
+  $('toggle-warmup').textContent=warmupOpen?'Tutup latihan':done===0?'Mulai latihan':done===3?'Lihat hasil':'Lanjutkan latihan';
+  $('toggle-warmup').setAttribute('aria-expanded',String(warmupOpen));
+  $('warmup-body').hidden=!warmupOpen;
+  const questions=[`A masuk lebih dulu, lalu B. Tambahkan C ${stack?'ke atas tumpukan':'ke belakang antrean'}. Operasi mana yang tepat?`,`${stack?'Stack':'Queue'} kini berisi A, B, C berdasarkan urutan masuk. Jika ${remove}() dijalankan, data mana yang keluar?`,`Sekarang ${stack?'top':'front'} menunjuk B. Lihat datanya tanpa menghapus. Operasi mana yang tepat?`];
+  const description=done===3?`${stack?'Stack mengeluarkan data terakhir masuk (LIFO).':'Queue mengeluarkan data pertama masuk (FIFO).'} peek() membaca data tanpa mengubah isi struktur.`:state.answered?'Amati hasilnya pada diagram, lalu lanjutkan ke langkah berikutnya.':questions[state.step];
+  const choices=state.step===0?[['add',`Tambah C / ${add}(C)`],['remove',`Ambil / ${remove}()`],['peek','Lihat / peek()']]:state.step===1?['A','B','C'].map(id=>[id,id]):[['remove',`Ambil / ${remove}()`],['peek','Lihat / peek()'],['empty','Cek kosong / isEmpty()']];
+  const diagram=values.map((value,i)=>`<li><span>${i===0?stack?'top':'front':i===values.length-1?stack?'dasar':'rear':'data'}</span><strong>${escape(value.id)}</strong></li>`).join('');
+  $('warmup-exercise').innerHTML=`<ol class="warmup-steps" aria-label="Langkah latihan">${['Tambah data','Tebak yang keluar','Baca tanpa menghapus'].map((title,i)=>`<li ${i===state.step&&done<3?'aria-current="step"':''}>${i<done?icon('check'):`${i+1}.`} ${title}</li>`).join('')}</ol><div class="warmup-grid"><div><h3>${done===3?'Tiga tantangan selesai.':`Langkah ${state.step+1}${state.answered?' selesai':': '+['Tambahkan satu data','Amati urutan keluar','Lihat tanpa mengambil'][state.step]}`}</h3><p>${description}</p><div id="warmup-choices" class="warmup-choices">${state.answered?'':choices.map(([answer,label])=>`<button class="secondary" data-warmup-answer="${answer}">${label}</button>`).join('')}</div><div class="warmup-actions">${state.answered&&done<3?'<button class="primary" data-warmup-next="true">Lanjut ke langkah berikutnya</button>':''}${done===3?'<a class="secondary" href="#simulation">Coba di arena</a>':''}<button class="text-button" data-warmup-reset="true">Ulangi latihan</button></div></div><div class="warmup-preview"><h3>${stack?'Stack latihan':'Queue latihan · FIFO dasar'}</h3><p>${stack?'Dibaca dari top menuju dasar.':'Dibaca dari front menuju rear; tanpa prioritas dan waktu pelayanan.'}</p><ul class="warmup-data" aria-label="${stack?'Urutan dari top ke dasar':'Urutan dari front ke rear'}">${diagram}</ul><p>Jumlah data: <strong>${values.length}</strong></p></div></div>`;
+  $('warmup-feedback').textContent=state.message;
+  $('warmup-feedback').classList.toggle('error',state.error);
+}
+
+function answerWarmup(answer) {
+  const state=warmups[room];if(state.answered)return;
+  const stack=room==='stack',expected=state.step===0?'add':state.step===1?state.structure.peek().id:'peek';
+  if(!['add','remove','peek','empty','A','B','C'].includes(answer))return;
+  state.error=answer!==expected;
+  if(state.error){
+    state.message=['Belum tepat. Pilih operasi yang menambah data; mengambil atau melihat tidak menambah C.',`Belum tepat. Amati ${stack?'top dan aturan terakhir masuk, pertama keluar':'front dan aturan pertama masuk, pertama keluar'}. Coba lagi.`,'Belum tepat. Ambil menghapus data, sedangkan cek kosong hanya memberi True/False. Pilih operasi yang membaca data.'][state.step];
+  }else{
+    if(state.step===0){
+      state.structure[stack?'push':'enqueue'](item('C','Data C',1));
+      state.message=stack?'Benar. push(C) menaruh C di top. Urutannya kini C → B → A dari top.':'Benar. enqueue(C) menaruh C di rear. Front tetap A; urutannya A → B → C.';
+    }else if(state.step===1){
+      const removed=state.structure[stack?'pop':'dequeue']();
+      state.message=`Benar. ${removed.id} keluar lewat ${stack?'top':'front'}. ${stack?'Top':'Front'} sekarang B; tersisa dua data.`;
+    }else state.message=`Benar. peek() menghasilkan ${state.structure.peek().id}; jumlah data tetap ${state.structure.count}. Data dibaca tanpa dihapus.`;
+    state.answered=true;
+  }
+  renderWarmup();$('warmup-feedback').focus({preventScroll:true});
+}
+
+$('toggle-warmup').addEventListener('click',()=>{warmupOpen=!warmupOpen;renderWarmup();});
 
 function clock(time = clinic.time) { return `${String(8 + Math.floor(time/60)).padStart(2,'0')}.${String(time%60).padStart(2,'0')}`; }
 function stopTrace() { clearInterval(traceTimer); traceTimer = null; $('trace-play').innerHTML = `${icon('play')}Putar`; }
@@ -376,7 +423,7 @@ function render() {
   });
   const cameraMoved=applyCamera(sameRoom,oldTransform);animateScene(oldPositions,cameraMoved);
   drawnRoom=room;
-  renderNodes();renderMission();renderHUD();renderFeedback();renderTrace();renderLog();
+  renderNodes();renderMission();renderHUD();renderFeedback();renderTrace();renderLog();renderWarmup();
   if(lastObject&&motionAllowed())document.querySelector(`[data-node="${CSS.escape(lastObject)}"]`)?.animate([{opacity:.4,transform:'translateX(-10px)'},{opacity:1,transform:'translateX(0)'}],{duration:200/motionSpeed,easing:'cubic-bezier(.16,1,.3,1)'});
   lastObject=null;
   if(focusSelector){
@@ -450,8 +497,15 @@ document.addEventListener('click',event=>{
   if(suppressClick){suppressClick=false;event.preventDefault();return;}
   const quick=event.target.closest('[data-quick]');
   if(quick){document.querySelector(`#controls [data-action="${quick.dataset.quick}"]`)?.click();return;}
-  const button=event.target.closest('[data-room],[data-item],[data-patient],[data-rack],[data-queue],[data-action],[data-mode],[data-predict]');
+  const button=event.target.closest('[data-room],[data-item],[data-patient],[data-rack],[data-queue],[data-action],[data-mode],[data-predict],[data-warmup-answer],[data-warmup-next],[data-warmup-reset]');
   if(!button)return;
+  if(button.dataset.warmupAnswer){answerWarmup(button.dataset.warmupAnswer);return;}
+  if(button.dataset.warmupNext){
+    const state=warmups[room];if(!state.answered||state.step>=2)return;
+    state.step++;state.answered=false;state.message='';state.error=false;renderWarmup();
+    document.querySelector('#warmup-choices button')?.focus({preventScroll:true});return;
+  }
+  if(button.dataset.warmupReset){warmups[room]=newWarmup(room);renderWarmup();document.querySelector('#warmup-choices button')?.focus({preventScroll:true});return;}
   if(button.dataset.room) {
     endDrag();room=button.dataset.room;camera.zoom=1;camera.focus=false;stopTrace();trace=null;clearTimeout(achievementTimer);$('achievement').hidden=true;feedback={text:room==='stack'?'Pilih rak, lalu coba push atau pop.':'Pilih pasien untuk melihat estimasi tunggu. Panggil pasien saat loket tersedia.',error:false};render();return;
   }
