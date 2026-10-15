@@ -356,6 +356,12 @@ function renderMission() {
   $('start-mission').textContent=m.active?'Ulangi level':'Mulai level';
   const next=stages.findIndex(([,d])=>!d);
   $('mission-progress').innerHTML=stages.map(([name,d],i)=>`<span class="${d?'done':m.active&&i===next?'current':''}">${d?icon('check'):`${i+1}.`} ${escape(name)}</span>`).join('');
+  // Record stars before drawing the chips so the finishing render already shows them.
+  if(done&&!m.wasComplete&&m.index!=null){
+    m.earned=stars({done,moves:m.moves??0,par:level.par,hintLevel:m.hintLevel??0,wrongPredictions:m.wrongPredictions??0});
+    progress[room][m.index]={done:true,stars:Math.max(m.earned,progress[room][m.index].stars)};
+    completedMissions.add(`${room}:${m.index}`);
+  }
   $('level-select').innerHTML=levels[room].map((l,i)=>`<button class="level-chip ${i===selectedLevel[room]?'active':''}" data-level="${i}" aria-pressed="${i===selectedLevel[room]}" aria-label="Level ${i+1}: ${escape(l.title)}, ${progress[room][i].stars} bintang">${i+1}<span>${'★'.repeat(progress[room][i].stars)}${'☆'.repeat(3-progress[room][i].stars)}</span></button>`).join('');
   let hint='';
   if(m.active&&!done){
@@ -370,11 +376,6 @@ function renderMission() {
   const planning=m.active&&level.planMode&&!done;
   $('plan-panel').hidden=!planning;
   $('plan-panel').innerHTML=planning?`<ol>${plan.map(p=>`<li>${escape(p.label)}</li>`).join('')||'<li>Rencana kosong. Pilih aksi di dock.</li>'}</ol><button class="primary" data-run-plan="true" ${plan.length?'':'disabled'}>Jalankan rencana</button> <button class="text-button" data-clear-plan="true">Hapus</button>`:'';
-  if(done&&!m.wasComplete&&m.index!=null){
-    m.earned=stars({done,moves:m.moves??0,par:level.par,hintLevel:m.hintLevel??0,wrongPredictions:m.wrongPredictions??0});
-    progress[room][m.index]={done:true,stars:Math.max(m.earned,progress[room][m.index].stars)};
-    completedMissions.add(`${room}:${m.index}`);
-  }
   $('level-summary').hidden=!done;
   if(done){
     const e=level.explain,answered=m.explained!=null,right=m.explained===e.answer;

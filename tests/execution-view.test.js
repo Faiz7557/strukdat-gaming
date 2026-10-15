@@ -310,6 +310,7 @@ test('Levels load from data, count moves, award stars, and ask an explain questi
   for(let i=0;i<3;i++)action({quickPush:'true'});
   assert.equal(vm.runInContext('racks[0].values().map(p=>p.id).join()',context),'C,B,A');
   assert.equal(vm.runInContext('progress.stack[0].stars',context),3);
+  assert.match(element('level-select').innerHTML,/data-level="0"[^>]*>1<span>★★★<\/span>/,'chip shows stars in the finishing render');
   assert.match(element('level-summary').innerHTML,/Mengapa C menjadi top\?/);
   action({explain:'1'});
   assert.match(element('level-summary').innerHTML,/push membuat node baru/);
