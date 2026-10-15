@@ -336,6 +336,80 @@ Tidak dilaporkan: kamera yang bergerak membatalkan animasi objek (keputusan terc
 7. Petunjuk bertingkat, prediksi pengunci, fase Explain (E6), level & bintang.
 8. Queue: peek/isEmpty per jalur berlabel + "berikutnya dilayani" (E1, E7); default FIFO.
 
+## 20. Status implementasi
+
+Status ini mengikuti branch `uiux-overhaul`. Pemetaan task mengikuti lampiran rencana (`docs/superpowers/plans/2026-10-15-strukdat-uiux-overhaul.md`); hash commit adalah hash pendek pada riwayat branch.
+
+### 20.1 Temuan §3 (gameplay)
+
+| Temuan | Prioritas | Task | Commit | Status |
+|---|---|---|---|---|
+| Loop aksi–hasil–kode terpecah | P1 | 4, 7 | f5e371b, 6cc51ed | Selesai |
+| Petunjuk misi selalu berupa langkah persis | P1 | 9 | 7afae38 | Selesai |
+| Prediksi hanya muncul saat misi aktif | P1 | 9 | 7afae38 | Selesai |
+| Satu misi per ruang, tanpa jenjang | P1 | 10 | f29f97f | Selesai |
+| Tantangan pemula terpisah dari arena | P2 | 4, 10 | f5e371b, f29f97f | Selesai |
+| Push memerlukan formulir empat isian | P2 | 8 | f2e596b | Selesai |
+| Nilai kembali tidak punya wujud | P2 | 6 | 6bf115b | Selesai |
+| Queue dibuka dalam mode prioritas | P2 | 8 | f2e596b | Selesai |
+| Kontrol waktu Queue bercampur dengan operasi | P2 | 8 | f2e596b | Selesai |
+| Gerak kode tidak sinkron dengan gerak objek | P3 | 7 | 6cc51ed | Selesai |
+| Label SVG kecil dan ID diputar | P3 | 5 | d583dc1 | Selesai |
+
+### 20.2 Temuan §10–13 (layout, style, tipografi, palet)
+
+| Temuan | Task | Commit | Status |
+|---|---|---|---|
+| §10 Layout: arena di bawah lipatan, rail ganda, topbar, panel form, hierarki, breakpoint | 4, 12 | f5e371b, 0a7c3ea, 368deb7, CSS dan dokumentasi pada task ini | Selesai |
+| §11 Style: kesan dashboard, drift token, wordmark | 2, 4, 12 | c5a667d, f5e371b, 1330aaa | Selesai |
+| §12 Tipografi: bold palsu, dua belas ukuran, ID diputar | 1, 2, 5 | bdb8b8f, c5a667d, d583dc1 | Selesai |
+| §13 Palet: prioritas biru, warna kotak acak, turquoise lima arti, kontras outline | 2, 3 | c5a667d, 9467461 | Selesai |
+
+### 20.3 Temuan animasi (A1–A8) dan kejelasan edukasi (E1–E8)
+
+| Temuan | Task | Commit | Status |
+|---|---|---|---|
+| A1 translate tanpa satuan | 1 | bdb8b8f | Selesai |
+| A2 keyboard tanpa gerak arena | 1 | bdb8b8f | Selesai |
+| A3 reduced motion tanpa isyarat | 6 | 6bf115b | Selesai |
+| A4 gerak tidak terhubung ke rekaman | 7 | 6cc51ed | Selesai |
+| A5 banner misi keluar tanpa animasi | 6 | 6bf115b | Selesai |
+| A6 drag yang dilepas di luar rak | 6 | 6bf115b | Selesai |
+| A7 momen selesai misi hanya banner kecil | 10 | f29f97f | Selesai |
+| A8 feedback dan HUD berganti seketika | 6 | 6bf115b | Selesai |
+| E1 peek Queue berbeda dari pasien yang dipanggil | 8 | f2e596b | Selesai |
+| E2 arah baca urutan tidak konsisten | 1 | bdb8b8f | Selesai |
+| E3 catatan kompleksitas bercampur | 1 | bdb8b8f | Selesai |
+| E4 urutan transfer tidak dijelaskan | 11 | 0d00d3d | Selesai |
+| E5 penafian Bedah Eksekusi terlalu panjang | 11 | 0d00d3d | Selesai |
+| E6 fase Explain belum ada | 10 | f29f97f | Selesai |
+| E7 isEmpty Queue hanya memeriksa jalur terpilih | 8 | f2e596b | Selesai |
+| E8 istilah ganda dan feedback dipertahankan | Global Constraints | tidak berubah | Dipertahankan |
+
+### 20.4 Keputusan dan perbaikan koordinator selama eksekusi
+
+- Commit tidak memakai trailer `Co-Authored-By` karena hook repo menolak trailer tersebut.
+- Pada ponsel, prinsip LIFO/FIFO tetap terlihat sebagai chip ringkas. Rencana awal menyembunyikannya, tetapi `DESIGN.md` mewajibkan prinsip tersebut pada semua ukuran.
+- Pada skala kecil, baris metadata rak di SVG disembunyikan (`compact-labels`). Jumlah tetap tampil di HUD dan Lensa. Kontrol kamera ponsel tersusun vertikal.
+- Label dock mempertahankan istilah ganda: Simpan / push, Ambil / pop, Lihat / peek, Daftar / enqueue, dan Panggil / dequeue.
+- Ditambahkan `.result-tray[hidden]{display:none}` agar baki kosong tetap tersembunyi.
+- Tes prediksi diarahkan ke `#mission-predict`. Tes prediksi Queue mengatur `queueMode='priority'` seperti handler misi sungguhan.
+- Perbaikan dari permainan langsung: chip level menampilkan bintang pada render yang menyelesaikan level (`0b7f5c8`). Pemulihan fokus tidak lagi melempar error untuk form tanpa id, yaitu dialog konfirmasi (`7485079`).
+
+### 20.5 Pengukuran yang dipakai
+
+Angka berikut berasal dari pengukuran yang sudah tercatat di audit ini; tidak diukur ulang pada task ini.
+
+- Desktop 1440×900: arena dimulai pada Y=253, dock aksi pada Y=820, dan kode di Lensa pada Y=691.
+- Ponsel 390×844: arena dimulai pada Y=289, dan teks SVG terkecil 12px.
+
+### 20.6 Belum diverifikasi
+
+- Tes Playwright (`tests/browser.cjs`, `tests/browser-audit.cjs`) belum dijalankan karena Playwright tidak terpasang. Screenshot `screenshots/audit/*` belum diperbarui.
+- Feel-check manual (Step 4 rencana) belum dilakukan di Browser pane.
+- Perangkat fisik, pembaca layar, dan pengguna mahasiswa nyata belum diuji.
+
+
 ## Sumber
 
 - [Ringkasan meta-studi Hundhausen dkk. 2002 dan taksonomi Naps dkk. 2002](https://www.scitepress.org/Papers/2009/18251/pdf/index.html)

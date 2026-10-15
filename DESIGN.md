@@ -15,17 +15,31 @@ colors:
   line: "#e0e4ee"
   danger: "#b24555"
   indigo-hover: "#252f92"
+  goal: "#b9730f"
+  goal-ink: "#8a5a0b"
+  goal-pale: "#fbf1e0"
+  structure-line: "#2f8aa0"
+  select-line: "#0e9e82"
 typography:
   headline:
     fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
-    fontSize: "34px"
+    fontSize: "28px"
     fontWeight: 500
     lineHeight: 1.15
     letterSpacing: "-.9px"
+  section:
+    fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
+    fontSize: "22px"
+    fontWeight: 500
   title:
     fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
-    fontSize: "16px"
+    fontSize: "18px"
     fontWeight: 500
+    lineHeight: 1.5
+  lead:
+    fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
+    fontSize: "16px"
+    fontWeight: 400
     lineHeight: 1.5
   body:
     fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
@@ -35,17 +49,17 @@ typography:
   label:
     fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
     fontSize: "13px"
+  meta:
+    fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
+    fontSize: "12px"
   code:
     fontFamily: "Consolas, monospace"
     fontSize: "13px"
     lineHeight: 2.15
 rounded:
-  field: "6px"
-  button: "7px"
-  overlay: "8px"
-  navigation: "10px"
-  log: "12px"
-  panel: "15px"
+  control: "6px"
+  hud: "10px"
+  card: "16px"
 spacing:
   compact-gap: "5px"
   form-gap: "10px"
@@ -56,45 +70,45 @@ components:
   button-primary:
     backgroundColor: "{colors.indigo}"
     textColor: "{colors.white}"
-    rounded: "{rounded.button}"
+    rounded: "{rounded.control}"
     padding: "11px 10px"
   button-primary-hover:
     backgroundColor: "{colors.indigo-hover}"
   button-secondary:
     backgroundColor: "{colors.white}"
     textColor: "{colors.indigo}"
-    rounded: "{rounded.button}"
+    rounded: "{rounded.control}"
     padding: "9px 11px"
   button-secondary-hover:
     backgroundColor: "{colors.pale}"
   input-field:
     backgroundColor: "#fafbfe"
     textColor: "{colors.ink}"
-    rounded: "{rounded.field}"
+    rounded: "{rounded.control}"
     padding: "9px 10px"
     height: "44px"
   room-navigation:
     backgroundColor: "#f7f8fb"
     textColor: "{colors.muted}"
-    rounded: "{rounded.navigation}"
+    rounded: "{rounded.hud}"
     padding: "4px"
   room-navigation-active:
     backgroundColor: "{colors.indigo}"
     textColor: "{colors.white}"
-    rounded: "{rounded.button}"
+    rounded: "{rounded.control}"
     padding: "10px 19px"
   mission-chip:
     backgroundColor: "{colors.pale}"
     textColor: "{colors.indigo}"
-    rounded: "4px"
+    rounded: "{rounded.control}"
     padding: "3px 7px"
   panel:
     backgroundColor: "{colors.white}"
-    rounded: "{rounded.panel}"
+    rounded: "{rounded.card}"
   linked-node:
     backgroundColor: "#f0f2fc"
     textColor: "{colors.indigo}"
-    rounded: "{rounded.button}"
+    rounded: "{rounded.control}"
   linked-node-selected:
     backgroundColor: "#e7f8f8"
 ---
@@ -129,13 +143,18 @@ Palet bergerak dari indigo teknis menuju turquoise aktif di atas permukaan putih
 ### Secondary
 
 - **Biru Operator** (`blue`): referensi, fokus keyboard, informasi operasi, dan jalur darurat.
-- **Cyan Jalur** (`cyan`): sisi arena, batas pilihan, detail struktural, dan jalur non-darurat.
+- **Cyan Jalur** (`cyan`): sisi arena dan detail struktural. Batas pilihan memakai `select-line`.
+- **Garis Struktur** (`structure-line`): batas jalur dan elemen struktural; warna triase Non-darurat.
 
 ### Tertiary
 
-- **Turquoise Aksi** (`teal`): penanda pilihan, target misi, area drop, garis energi arena, dan titik status.
+- **Turquoise Aksi** (`teal`): isi pilihan dan area drop. Target misi berpindah ke amber; outline pilihan memakai `select-line`.
 - **Hijau Teks Keberhasilan** (`teal-ink`): teks penyelesaian dan langkah yang selesai. Turquoise terang berfungsi sebagai penanda visual; teks keberhasilan menggunakan pasangan gelap ini.
-- **Merah Peringatan** (`danger`): tindakan pembatalan dan penanda bahaya; bukan aksen dekoratif.
+- **Amber Target** (`goal`): target misi, bintang, dan nilai baru di Baki hasil. Amber juga warna triase Darurat.
+- **Amber Teks** (`goal-ink`): teks Baki hasil dan label target di atas latar terang.
+- **Amber Pucat** (`goal-pale`): token cadangan untuk latar amber; belum dipakai komponen.
+- **Garis Pilihan** (`select-line`): outline pilihan dan drop target; kontras 3,37:1 pada putih.
+- **Merah Peringatan** (`danger`): tindakan pembatalan, penanda bahaya, dan triase Kritis; bukan aksen dekoratif.
 
 ### Neutral
 
@@ -148,6 +167,8 @@ Palet bergerak dari indigo teknis menuju turquoise aktif di atas permukaan putih
 
 **The Light Arena Rule.** Pertahankan dasar putih–silver dan gunakan warna aksen untuk objek, tindakan, pilihan, serta referensi.
 
+**Warna menandai keadaan, bukan identitas.** Semua kotak Stack memakai satu nada netral. Warna dipakai untuk status: terpilih (turquoise), target dan bintang (amber), serta gagal (merah). Triase pasien: Kritis merah (`danger`), Darurat amber (`goal`), Non-darurat `structure-line`.
+
 ## Typography
 
 **Display / Body Font:** Ubuntu lokal, dengan Segoe UI dan sans-serif sebagai fallback. File Regular dan Medium dimuat dari aset proyek.
@@ -158,23 +179,25 @@ Palet bergerak dari indigo teknis menuju turquoise aktif di atas permukaan putih
 
 ### Hierarchy
 
-- **Headline:** 34px desktop, 30px ponsel, Ubuntu Medium.
-- **Title:** 16px panel, 18px misi, 26px Bedah Eksekusi (24px ponsel).
-- **Body:** dasar 15px; penjelasan ruang, misi, feedback, dan materi 14px dengan line-height 1.7–1.8.
-- **Label:** 13px untuk field; 12px untuk metadata, badge, dan petunjuk ringkas. Teks informasi tidak memakai turquoise terang.
-- **Code:** 13px desktop, 12px ponsel. Nomor baris memakai tinta gelap; teks next memakai biru operator agar kontras di permukaan pucat cukup.
+- **Headline:** 28px (`--t-display`), Ubuntu Medium. Judul section 22px (`--t-section`).
+- **Title:** 18px (`--t-title`) untuk panel dan misi; 16px (`--t-lead`) untuk penekanan.
+- **Body:** 15px (`--t-body`) dengan line-height 1.5 sampai 1.8 untuk penjelasan.
+- **Label:** 13px (`--t-label`) untuk field dan kontrol; 12px (`--t-meta`) untuk metadata, badge, label SVG, dan petunjuk ringkas. Teks informasi tidak memakai turquoise terang.
+- **Code:** 13px (`--t-code`). Nomor baris memakai tinta gelap; teks next memakai biru operator agar kontras di permukaan pucat cukup.
 
-Angka jam, kapasitas, dan laporan memakai angka tabular. Font lokal dipertahankan.
+Skala tujuh langkah: 12, 13, 15, 16, 18, 22, dan 28px. Minimum 12px untuk semua teks, termasuk teks SVG. Angka jam, kapasitas, dan laporan memakai angka tabular. Hanya Ubuntu 400 dan 500 yang dimuat; `strong` memakai 500, bukan bold sintetis. Font lokal dipertahankan.
 
 ## Layout
 
-Urutan belajar: tujuan misi → arena → aksi cepat → hasil operasi → linked-list → Bedah Eksekusi. Panel kontrol lengkap berada di kanan pada desktop; feedback berada setelah aksi arena dan menautkan rekaman kode saat tersedia.
+Topbar setinggi 56px memuat wordmark, tab ruang, progres level, dan prinsip LIFO/FIFO. Di atas 540px tidak ada rail samping; ruang dipilih dari topbar. Pada ponsel, prinsip LIFO/FIFO tetap terlihat sebagai chip ringkas.
 
-Rail desktop tetap 84px (66px pada tablet); shell memiliki topbar dan area utama. Workspace memakai arena fleksibel dan kontrol 360px, menjadi 320px di bawah 1200px. Pada 1050px atau kurang, workspace dan Bedah Eksekusi menjadi satu kolom; tautan kontrol lengkap tampil setelah aksi cepat. Prinsip LIFO/FIFO tetap terlihat pada semua ukuran.
+Urutan belajar di desktop: tujuan misi, stage arena, Lensa di kolom kanan, lalu Bedah Eksekusi. Stage memakai tinggi `clamp(420px, 100vh - 256px, 720px)` sehingga arena dan dock aksi (`#quick-actions`) terlihat dalam satu layar. Dock berada di dalam stage pada bagian bawah. Lensa (`.inspector.lens`) memuat struktur, kode, dan kontrol lanjutan; lebarnya 380px dan turun menjadi satu kolom pada 1050px atau kurang.
 
-Pada 540px atau kurang, navigasi menjadi bilah bawah 68px ditambah safe area. Rail samping dan pemilih ruang atas digantikan oleh tiga tombol Stack, Queue, dan Panduan pada bilah tersebut. Shell memakai lebar penuh dan menyisakan ruang bawah untuk navigasi. Inset halaman 16px; field 16px dengan tinggi 44px. SVG memakai lebar 125% dan offset -12.5% untuk menjaga ukuran objek. Diagram node dan kode bergulir di dalam panel tanpa memperlebar halaman.
+Pengukuran 1440×900: arena dimulai pada Y=253, dock pada Y=820, dan kode di Lensa pada Y=691. Pengukuran 390×844: arena dimulai pada Y=289, dan teks SVG terkecil 12px.
 
-Kontrol kamera dan tombol operasi minimum 44px. Petunjuk arena berada di baris tersendiri; kamera berada di bawahnya. Operasi cepat tersedia pada desktop, tablet, dan ponsel. Lantai arena mengizinkan gulir vertikal (`pan-y`); hanya kotak teratas yang dapat diseret memakai `touch-action: none`.
+Pada 540px atau kurang, navigasi menjadi bilah bawah 68px ditambah safe area. Shell memakai lebar penuh dan menyisakan ruang bawah untuk navigasi. Inset halaman 16px; field 16px dengan tinggi 44px. Pada ponsel, baris metadata rak di SVG disembunyikan (`compact-labels`); jumlah tetap tampil di HUD dan Lensa. Diagram node dan kode bergulir di dalam panelnya tanpa memperlebar halaman.
+
+Kontrol kamera dan tombol operasi minimum 44px. Lantai arena mengizinkan gulir vertikal (`pan-y`); hanya kotak teratas yang dapat diseret memakai `touch-action: none`.
 
 ## Elevation & Depth
 
@@ -191,7 +214,7 @@ Panel memakai bayangan ambient yang sangat halus dan garis batas, sedangkan keda
 
 ## Shapes
 
-Bentuk umum adalah sudut membulat ringan: field, tombol, HUD, navigasi, dan panel memakai radius berbeda sesuai ukuran yang tercatat dalam frontmatter. Batas 1px memisahkan bidang yang berdekatan; tidak ada outline tebal sebagai dekorasi umum. Badge kecil memakai radius 4px, sedangkan penanda status berbentuk lingkaran.
+Bentuk umum adalah sudut membulat ringan. Radius yang dipakai hanya token `control` (6px) untuk field, tombol, dan badge; `hud` (10px) untuk navigasi dan HUD; `card` (16px) untuk panel; serta 0 dan 50% untuk kasus khusus. Batas 1px memisahkan bidang yang berdekatan; tidak ada outline tebal sebagai dekorasi umum. Penanda status berbentuk lingkaran.
 
 Signature dunia berupa balok SVG tiga sisi dan lantai belah ketupat. Ikon garis digambar khusus, umumnya 19px dengan stroke 1.7 dan ujung membulat; ikon tindakan kecil memakai 12–16px. Ikon mendampingi kata atau memiliki nama aksesibel.
 
@@ -201,7 +224,7 @@ Signature dunia berupa balok SVG tiga sisi dan lantai belah ketupat. Ikon garis 
 
 Tombol terasa ringkas dan tegas.
 
-- **Primary:** indigo dengan teks putih, radius token `button`, padding token komponen, tinggi minimum 44px, dan bobot 500. Biasanya memenuhi lebar field.
+- **Primary:** indigo dengan teks putih, radius token `control`, padding token komponen, tinggi minimum 44px, dan bobot 500. Biasanya memenuhi lebar field.
 - **Secondary:** putih, teks indigo, border silver, tinggi minimum 44px. Hover menggunakan indigo pucat.
 - **Text:** tanpa permukaan terpisah, untuk reset dan penghapusan catatan.
 - **Focus:** outline biru 3px dengan offset 4px.
@@ -214,15 +237,15 @@ Badge misi memakai indigo pucat dan teks indigo. Status selesai memakai permukaa
 
 ### Cards / Containers
 
-Arena dan panel operator memakai putih, radius token `panel`, border silver, dan bayangan ambient. Subbagian dipisahkan garis dan perubahan nada ringan. Area struktur memakai permukaan hampir putih; panel jejak Python memakai silver berwarna indigo lembut. Padding bagian utama umumnya 20px.
+Arena dan panel operator memakai putih, radius token `card`, border silver, dan bayangan ambient. Subbagian dipisahkan garis dan perubahan nada ringan. Area struktur memakai permukaan hampir putih; panel jejak Python memakai silver berwarna indigo lembut. Padding bagian utama umumnya 20px.
 
 ### Inputs / Fields
 
-Field native memiliki label permanen, permukaan terang, border silver, radius token `field`, dan padding komponen. Fokus menggeser border menjadi indigo dengan bayangan lembut `0 0 0 3px #2f39a90b`; outline keyboard tetap ada. Mobile memakai font 16px dan tinggi 44px. Pesan gagal muncul melalui umpan balik yang memiliki teks, simbol, dan status live; dokumentasi tidak mengklaim error border per-field yang belum ada.
+Field native memiliki label permanen, permukaan terang, border silver, radius token `control`, dan padding komponen. Fokus menggeser border menjadi indigo dengan bayangan lembut `0 0 0 3px #2f39a90b`; outline keyboard tetap ada. Mobile memakai font 16px dan tinggi 44px. Pesan gagal muncul melalui umpan balik yang memiliki teks, simbol, dan status live; dokumentasi tidak mengklaim error border per-field yang belum ada.
 
 ### Navigation
 
-Rail menyediakan Stack, Queue, dan Panduan dengan ikon serta label. Pilihan rail memakai indigo pucat; pemilih ruang atas memakai permukaan indigo penuh untuk tombol aktif. `aria-pressed` menyatakan pilihan ruang. Pada layout lebih kecil pemilih ruang atas menjadi satu baris penuh; rail tetap tersedia dengan ukuran yang mengecil.
+Navigasi ruang berada di topbar sebagai `room-switch` dengan `aria-pressed`; ruang aktif memakai indigo penuh. Di atas 540px tidak ada rail samping. Pada ponsel, bilah bawah 68px memuat Stack, Queue, dan Panduan dengan ikon serta label.
 
 ### Isometric arena and camera
 
@@ -232,9 +255,11 @@ Animasi objek menggunakan lintasan terangkat berhingga (560ms pada kecepatan 1×
 
 **The Explain Motion Rule.** Gerak mengikuti tindakan atau perubahan perhatian, selesai dalam satu rangkaian, dan dapat diminimalkan.
 
+Baki hasil (`#result-tray`) menampilkan nilai kembali dari pop, peek, dequeue, dan isEmpty, termasuk `None`. Kotak yang di-pop melengkung ke baki lalu memudar; baki diberi outline amber selama 600ms ketika nilai baru masuk. Pada gerakan minimal, objek yang berubah tetap diberi outline statis tanpa translasi.
+
 ### Linked-list and Python trace
 
-Node menampilkan data, bagian next, dan label pointer. Diagram utama menunjukkan keadaan akhir yang sama dengan arena. Bedah Eksekusi menampilkan cuplikan Python dari dokumen, baris aktif, cabang tidak dijalankan, serta rekaman referensi dan variabel lokal dari instruksi model JavaScript. Baris dapat dipilih dengan klik atau keyboard. Kontrol playback minimal 44px memakai interval 1100ms pada 1× dan berhenti di akhir. Snapshot tidak memutasi arena. Rekaman empat operasi dasar dibedakan dari penjelasan algoritma operasi lainnya. Sumber dokumen dan nomor baris relatif cuplikan selalu dijelaskan. Implementasi JavaScript aktual dan definisi awal Node/Stack/Queue tersedia dalam disclosure.
+Node menampilkan data, bagian next, dan label pointer. Diagram utama menunjukkan keadaan akhir yang sama dengan arena. Bedah Eksekusi menampilkan cuplikan Python dari dokumen, baris aktif, cabang tidak dijalankan, serta rekaman referensi dan variabel lokal dari instruksi model JavaScript. Baris dapat dipilih dengan klik atau keyboard. Kontrol playback minimal 44px memakai interval 1100ms dibagi kecepatan gerak dan berhenti di akhir. Objek arena yang direferensikan baris aktif diberi sorot `trace-focus`. Snapshot tidak memutasi arena. Rekaman empat operasi dasar dibedakan dari penjelasan algoritma operasi lainnya. Sumber dokumen dan nomor baris relatif cuplikan selalu dijelaskan. Implementasi JavaScript aktual dan definisi awal Node/Stack/Queue tersedia dalam disclosure.
 
 Kartu memori menampilkan identitas node lokal N1/N2, data, serta target next secara eksplisit; posisi kartu tidak menyatakan urutan linked-list. Perubahan referensi memakai permukaan turquoise pucat dan teks sebelum→sesudah. Node terlepas bergaris putus-putus; identitas ini bukan alamat RAM dan tidak merepresentasikan garbage collector. Python tidak dijalankan oleh browser. Pencatatan node menambah O(n) per langkah, terpisah dari biaya operasi pointer inti O(1).
 
@@ -244,7 +269,7 @@ Pilihan node menggunakan batas cyan dan permukaan cyan pucat. Baris kode aktif m
 
 ### Reduced motion and feedback
 
-Preferensi perangkat dan pilihan Gerakan minimal meniadakan animasi operasi serta transisi utama. Animasi dihentikan ketika halaman tersembunyi. Feedback dan banner misi memakai status live yang sopan; keyboard memiliki alternatif lengkap untuk tindakan seret.
+Preferensi perangkat dan pilihan Gerakan minimal meniadakan translasi dan transisi utama, tetapi tidak menghapus penjelasan: perubahan tetap ditandai outline statis (`.changed`, `.result-tray.fresh`). Mode keyboard tetap menjalankan gerak arena; hanya transisi tombol yang dimatikan. Animasi dihentikan ketika halaman tersembunyi. Feedback dan banner misi memakai status live yang sopan; keyboard memiliki alternatif lengkap untuk tindakan seret.
 
 ## Do's and Don'ts
 
@@ -271,6 +296,8 @@ Preferensi perangkat dan pilihan Gerakan minimal meniadakan animasi operasi sert
 Misi, reset, dan pergantian mode meminta konfirmasi jika eksperimen atau isian sudah berubah. Escape dan tombol kembali mempertahankan data. Prediksi membaca top/front saat ini; jawaban salah dapat dicoba lagi dan tidak membuka jawaban langsung. Hint Stack mengikuti lokasi penghalang, termasuk Rak B; jika barang yang diperlukan sudah keluar, hint meminta mengulang skenario. Penyelesaian misi menjelaskan hasil yang teramati tanpa mengklaim penguasaan materi.
 
 Tujuan transfer disimpan selama valid untuk rak sumber. Draft kapasitas disimpan per rak; penambahan barang hanya membersihkan isian formulir barang. Pilihan rak, mode, objek dan jalur memiliki aria-pressed; semua tombol SVG memiliki indikator fokus. Perubahan preferensi reduced motion saat aplikasi terbuka membatalkan animasi yang sedang berjalan.
+
+Level 1–6 per ruang (Stack: tumpuk, kosongkan, ambil B, balik urutan, batas kapasitas, rencana; Queue: antre, kosongkan, batal di tengah, jam loket, prioritas, rencana pelayanan) memberi bintang sesuai langkah dan petunjuk yang dipakai. Petunjuk bertingkat, prediksi di strip misi, dan pertanyaan setelah level mendukung fase Explain.
 
 Lihat AUDIT-UIUX.md untuk temuan, bukti verifikasi, serta batas pengujian.
 
