@@ -73,7 +73,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     await page.locator('#focus-object').click();assert.equal(await page.locator('#focus-object').getAttribute('aria-pressed'),'true');
     assert.equal(await page.locator('#zoom-level').innerText(),'140%');
     await page.locator('#reset-camera').click();assert.equal(await page.locator('#zoom-level').innerText(),'100%');
-    await page.locator('#start-mission').click();await acceptReplacement(page);await page.waitForFunction(()=>document.querySelector('#mission-status').textContent==='Sedang berjalan');await page.locator('[data-predict="D"]').click();
+    await page.locator('[data-level="2"]').click();await page.locator('#start-mission').click();await acceptReplacement(page);await page.waitForFunction(()=>document.querySelector('#mission-status').textContent==='Sedang berjalan');await page.locator('[data-predict="D"]').click();
     for(let i=0;i<2;i++) {
       await page.locator('#controls [data-rack="0"]').click();
       await page.locator('#destination').selectOption('2');await page.locator('[data-action="transfer"]').click();
@@ -99,7 +99,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
     await page.locator('[data-room="queue"]:visible').first().click();
     await page.waitForFunction(()=>document.getAnimations().every(animation=>animation.playState!=='running'));
     await page.screenshot({path:path.join(screenshots,'queue-desktop.png'),fullPage:true});
-    await page.locator('#start-mission').click();await acceptReplacement(page);await page.waitForFunction(()=>document.querySelector('#mission-status').textContent==='Sedang berjalan');
+    await page.locator('[data-level="4"]').click();await page.locator('#start-mission').click();await acceptReplacement(page);await page.waitForFunction(()=>document.querySelector('#mission-status').textContent==='Sedang berjalan');
     await page.locator('#register-form .primary').click();await page.locator('[data-predict="P04"]').click();
     await page.locator('[data-action="call"]').click();assert.match(await page.locator('.service-status').innerText(),/P04/);
     assert.equal(await page.locator('[data-action="call"]').isDisabled(),true);

@@ -1,6 +1,7 @@
 import { Stack, Queue, Clinic, transfer, priorities } from './model.js';
 import { lessons } from './execution.js';
 import { warmupQuestions } from './challenges.js';
+import { levels, complete, stars, buildRacks, buildClinic } from './levels.js';
 
 const $ = id => document.getElementById(id);
 const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13,6 +14,11 @@ const laneFills = ['#fbe9ec','#fbf1e0','#e2f4f8'], laneStrokes = ['#b24555','#b9
 let room = 'stack', racks, clinic, rack = 0, selectedItem = null, selectedPatient = null, selectedQueue = 0;
 let queueMode = 'fifo', serial = 7, patientSerial = 6, operationCount = 0, lastObject = null;
 let missions = { stack: { active:false }, queue: { active:false } };
+const progress = { stack: levels.stack.map(() => ({ done: false, stars: 0 })), queue: levels.queue.map(() => ({ done: false, stars: 0 })) };
+const selectedLevel = { stack: 0, queue: 0 };
+let plan = [], planToken = 0, planTimer = null, pendingLabel = null;
+const newEvents = () => ({ popped: [], called: [], served: [], cancelled: [], registered: [] });
+const countedMove = op => /^(pop|dequeue|pindah|waktu|batalkan|push\(|enqueue\()/.test(op);
 let trace = null, traceIndex = 0, traceTimer = null, logs = [];
 let drawnRoom = null;
 let lastResult = null;
@@ -179,6 +185,7 @@ function renderTrace() {
 function notify(text, error = false, operation = null) {
   feedback = {text,error};
   if (operation && !['peek()','empty()','cari()','reset()'].includes(operation)) edited[room] = true;
+  if (operation && countedMove(operation) && missions[room].active) missions[room].moves = (missions[room].moves ?? 0) + 1;
   if (operation) { operationCount++; logs.unshift({time:room==='queue'?clock():String(operationCount).padStart(2,'0'),operation,text}); logs = logs.slice(0,100); }
   renderFeedback(); renderLog();
 }
@@ -316,10 +323,10 @@ function missionHint() {
   const m=missions[room];
   if(room==='stack'){
     const location=id=>racks.findIndex(s=>s.values().some(p=>p.id===id));
-    const missing=['A','C','D',...(!m.removed?['B']:[])].find(id=>location(id)<0);
+    const missing=['A','C','D',...(!m.events.popped.includes('B')?['B']:[])].find(id=>location(id)<0);
     if(missing)return {recovery:true,step:`${missing} sudah keluar dari arena. Ulangi misi untuk memulihkan skenario.`};
     const concept='Hanya barang top yang bisa diambil. Barang di atas target harus dipindah dulu, lalu dikembalikan dengan urutan terbalik.';
-    if(!m.removed){
+    if(!m.events.popped.includes('B')){
       const source=location('B'),blockers=racks[source].values().findIndex(p=>p.id==='B');
       return {concept,direction:blockers?`Ada ${blockers} barang di atas B pada ${rackNames[source]}.`:`B sudah menjadi top ${rackNames[source]}.`,
         step:racks[source].peek()?.id==='B'?`Ambil B dari ${rackNames[source]}.`:`Pindahkan ${racks[source].peek().id} dari ${rackNames[source]} ke ${source===2?'Rak B':'Bantuan'}.`};
@@ -331,46 +338,50 @@ function missionHint() {
       step:top===target?`Kembalikan ${target} dari ${rackNames[source]} ke Rak A.`:`Pindahkan ${top} dari ${rackNames[source]} ke ${source===2?'Rak B':'Bantuan'} agar ${target} dapat diambil.`};
   }
   const concept='Pemanggilan selalu mengambil front dari jalur prioritas tertinggi yang berisi. Di dalam satu jalur berlaku FIFO.';
-  const step=!m.critical?'Daftarkan P04 dengan tingkat kritis.':!m.servedCritical?(clinic.active?'Majukan ke kejadian berikut untuk menyelesaikan pelayanan.':'Panggil P04 dari jalur kritis.'):!m.fifo?'Panggil P02; P03 datang setelahnya.':'Pilih P01 lalu batalkan antreannya.';
-  const direction=!m.critical?'Belum ada pasien kritis di antrean.':!m.servedCritical?'P04 harus selesai dilayani sebelum pasien lain.':!m.fifo?'P02 dan P03 sama-sama darurat; siapa yang datang lebih dulu?':'Satu pasien non-darurat perlu dibatalkan.';
+  const [critical,servedCritical,fifoDone]=levels.queue[4].stages({clinic,events:m.events}).map(([,d])=>d);
+  const step=!critical?'Daftarkan P04 dengan tingkat kritis.':!servedCritical?(clinic.active?'Majukan ke kejadian berikut untuk menyelesaikan pelayanan.':'Panggil P04 dari jalur kritis.'):!fifoDone?'Panggil P02; P03 datang setelahnya.':'Pilih P01 lalu batalkan antreannya.';
+  const direction=!critical?'Belum ada pasien kritis di antrean.':!servedCritical?'P04 harus selesai dilayani sebelum pasien lain.':!fifoDone?'P02 dan P03 sama-sama darurat; siapa yang datang lebih dulu?':'Satu pasien non-darurat perlu dibatalkan.';
   return {concept,direction,step};
 }
+const missionHintFor=(level,ctx)=>['s3','q5'].includes(level.id)?missionHint().step:level.hints.direction(ctx);
 function renderMission() {
-  const m=missions[room]; let complete=false, stages;
-  if(room==='stack') {
-    const removed=!!m.removed, restored=removed&&racks[0].values().map(p=>p.id).join(',')==='D,C,A'&&racks[1].isEmpty()&&racks[2].isEmpty();
-    complete=restored;
-    stages=[['Pindahkan penghalang',!!m.cleared],['Ambil B',removed],['Pulihkan urutan',restored]];
-    $('mission-title').textContent='Misi: ambil barang B';
-    $('mission-description').textContent=complete?'Berhasil! B keluar dan Rak A kembali: top → D → C → A.':m.active?'Target B ada di Rak A. Gunakan Bantuan; kembalikan C lalu D setelah B diambil.':'Pindahkan penghalang ke rak bantuan, ambil B, lalu pulihkan Rak A: top → D → C → A.';
-  } else {
-    complete=!!(m.critical&&m.servedCritical&&m.fifo&&m.cancelled);
-    stages=[['Daftarkan P04 kritis',!!m.critical],['Selesaikan P04',!!m.servedCritical],['Panggil P02',!!m.fifo],['Batalkan P01',!!m.cancelled]];
-    $('mission-title').textContent='Misi: prioritas tetap tertib';
-    $('mission-description').textContent=complete?'Berhasil! Prioritas didahulukan, FIFO darurat terjaga, dan laporan pembatalan diperbarui.':m.active?'Daftarkan P04 kritis, layani sampai selesai, panggil P02 sebelum P03, lalu batalkan P01.':'Amati pasien kritis mengubah urutan pelayanan sambil menjaga FIFO pada setiap jalur.';
-  }
-  $('mission-status').textContent=complete?'Selesai ✓':m.active?'Sedang berjalan':'Siap dicoba';
-  $('mission-status').classList.toggle('complete',complete);
-  $('start-mission').textContent=m.active?'Ulangi misi':'Mulai misi';
-  const next=stages.findIndex(([,done])=>!done);
-  $('mission-progress').innerHTML=stages.map(([name,done],i)=>`<span class="${done?'done':m.active&&i===next?'current':''}">${done?icon('check'):`${i+1}.`} ${name}</span>`).join('');
+  const m=missions[room],level=m.level??levels[room][selectedLevel[room]];
+  const ctx=m.active?(room==='stack'?{racks,events:m.events??newEvents()}:{clinic,events:m.events??newEvents()}):(room==='stack'?{racks:buildRacks(level.setup),events:newEvents()}:{clinic:buildClinic(level.setup),events:newEvents()});
+  const stages=level.stages(ctx).map(([n,d])=>[n,m.active&&d]);
+  const done=m.active&&stages.every(([,d])=>d);
+  $('mission-title').textContent=`Level ${(m.index??selectedLevel[room])+1}: ${level.title}`;
+  $('mission-description').textContent=level.goal;
+  $('mission-status').textContent=done?'Selesai ✓':m.active?`Langkah ${m.moves??0} · par ${level.par}`:'Siap dicoba';
+  $('mission-status').classList.toggle('complete',done);
+  $('start-mission').textContent=m.active?'Ulangi level':'Mulai level';
+  const next=stages.findIndex(([,d])=>!d);
+  $('mission-progress').innerHTML=stages.map(([name,d],i)=>`<span class="${d?'done':m.active&&i===next?'current':''}">${d?icon('check'):`${i+1}.`} ${escape(name)}</span>`).join('');
+  $('level-select').innerHTML=levels[room].map((l,i)=>`<button class="level-chip ${i===selectedLevel[room]?'active':''}" data-level="${i}" aria-pressed="${i===selectedLevel[room]}" aria-label="Level ${i+1}: ${escape(l.title)}, ${progress[room][i].stars} bintang">${i+1}<span>${'★'.repeat(progress[room][i].stars)}${'☆'.repeat(3-progress[room][i].stars)}</span></button>`).join('');
   let hint='';
-  if(m.active&&!complete){
-    const h=missionHint(),level=m.hintLevel??0;
-    hint=h.recovery?h.step:level>=3?`Langkah berikut: ${h.step}`:level===2?h.direction:level===1?h.concept:'';
+  if(m.active&&!done){
+    const h=['s3','q5'].includes(level.id)?missionHint():{};
+    const tier=m.hintLevel??0;
+    hint=h.recovery?h.step:tier>=3?`Langkah berikut: ${missionHintFor(level,ctx)}`:tier===2?level.hints.direction(ctx):tier===1?level.hints.concept:'';
   }
   $('mission-next').textContent=hint;
-  $('mission-hint').hidden=!m.active||complete||(m.hintLevel??0)>=3;
+  $('mission-hint').hidden=!m.active||done||(m.hintLevel??0)>=3;
   $('mission-hint').textContent=`Petunjuk (${(m.hintLevel??0)+1}/3)`;
   $('mission-predict').innerHTML=predictionHTML();
-  if(complete&&!m.wasComplete){
-    completedMissions.add(room);clearTimeout(achievementTimer);
-    $('achievement').innerHTML=`${icon('check')}<div><strong>Misi selesai.</strong><small>${room==='stack'?'B diambil. Rak A pulih: top → D → C → A.':'P04 selesai. P02 dipanggil sebelum P03.'}</small></div>`;
-    $('achievement').hidden=false;
-    if(motionAllowed())$('achievement').animate([{opacity:0,transform:'translate(-50%, -8px) scale(.97)'},{opacity:1,transform:'translate(-50%, 0) scale(1)'}],{duration:260,easing:'cubic-bezier(.16,1,.3,1)'});
-    achievementTimer=setTimeout(()=>{const el=$('achievement');if(!motionAllowed()){el.hidden=true;return;}el.animate([{opacity:1,transform:'translate(-50%,0px)'},{opacity:0,transform:'translate(-50%,-4px)'}],{duration:180,easing:'cubic-bezier(.16,1,.3,1)'}).finished.then(()=>el.hidden=true).catch(()=>el.hidden=true);},3500);
+  const planning=m.active&&level.planMode&&!done;
+  $('plan-panel').hidden=!planning;
+  $('plan-panel').innerHTML=planning?`<ol>${plan.map(p=>`<li>${escape(p.label)}</li>`).join('')||'<li>Rencana kosong. Pilih aksi di dock.</li>'}</ol><button class="primary" data-run-plan="true" ${plan.length?'':'disabled'}>Jalankan rencana</button> <button class="text-button" data-clear-plan="true">Hapus</button>`:'';
+  if(done&&!m.wasComplete&&m.index!=null){
+    m.earned=stars({done,moves:m.moves??0,par:level.par,hintLevel:m.hintLevel??0,wrongPredictions:m.wrongPredictions??0});
+    progress[room][m.index]={done:true,stars:Math.max(m.earned,progress[room][m.index].stars)};
+    completedMissions.add(`${room}:${m.index}`);
   }
-  m.wasComplete=complete;$('mission-score').textContent=`${completedMissions.size} / 2 misi`;
+  $('level-summary').hidden=!done;
+  if(done){
+    const e=level.explain,answered=m.explained!=null,right=m.explained===e.answer;
+    $('level-summary').innerHTML=`<strong>${'★'.repeat(m.earned)}${'☆'.repeat(3-m.earned)} · ${m.moves} langkah (par ${level.par})</strong><p>${escape(e.question)}</p><div class="operation-row">${e.choices.map((c,i)=>`<button class="secondary ${m.explained===i?(i===e.answer?'correct':'incorrect'):''}" data-explain="${i}">${escape(c)}</button>`).join('')}</div>${right?`<p class="explain-why">${escape(e.why)}</p>`:answered?'<p class="explain-why">Belum tepat. Lihat lagi rekaman di Lensa, lalu coba lagi.</p>':''}${m.index<5?`<button class="primary" data-level="${m.index+1}" data-autostart="true">Level berikutnya</button>`:''}`;
+  }
+  m.wasComplete=done;
+  $('mission-score').textContent=`★ ${Object.values(progress).flat().reduce((n,p)=>n+p.stars,0)} / 36`;
 }
 function cleanGhost(element) {
   const clone=element.cloneNode(true);
@@ -495,20 +506,39 @@ function registerPatient(input) {
   const priority=queueMode==='fifo'?'non-darurat':input.priority,rank=priorities.indexOf(priority),q=clinic.queues[rank];
   const p=clinic.register({...input,priority});patientSerial++;drafts.queue={};selectedPatient=p.id;selectedQueue=rank;lastObject=p.id;
   traceExecution([{execution:q.lastExecution,context:`Jalur ${priorityNames[rank]} · enqueue`}]);
-  if(missions.queue.active&&p.id==='P04'&&priority==='kritis')missions.queue.critical=true;
+  if(missions.queue.active)missions.queue.events.registered.push({id:p.id,priority});
   notify(`${p.id} masuk dari rear ${queueMode==='fifo'?'antrean FIFO':'jalur '+priorityNames[rank]}. Estimasi tunggu ${clinic.estimate(p.id)} menit berdasarkan antrean saat ini.`,false,`enqueue(${p.id})`);
 }
 const nextServedId=()=>clinic.queues.find(q=>!q.isEmpty())?.peek()?.id??'None';
 function run(operation) {
+  if(missions[room].active&&missions[room].level?.planMode&&!planTimer){plan.push({label:pendingLabel??'aksi',run:operation});pendingLabel=null;renderMission();return;}
   try { operation(); render(); } catch(error) { stopTrace(); trace=null; renderTrace(); notify(error.message,true); $('feedback').focus(); }
+}
+function cancelPlan(){planToken++;clearTimeout(planTimer);planTimer=null;plan=[];}
+function runPlan(){
+  const steps=plan.splice(0),token=++planToken;let i=0;
+  const tick=()=>{
+    if(token!==planToken)return;
+    if(i>=steps.length){planTimer=null;render();return;}
+    try{steps[i++].run();render();}catch(error){planTimer=null;notify(`Rencana berhenti di langkah ${i}: ${error.message}`,true);render();return;}
+    planTimer=setTimeout(tick,700/motionSpeed);
+  };
+  planTimer=setTimeout(tick,0);
+}
+function loadLevel() {
+  const level=levels[room][selectedLevel[room]];
+  endDrag();stopTrace();trace=null;drafts[room]={};clearTimeout(achievementTimer);$('achievement').hidden=true;cancelPlan();lastResult=null;
+  missions[room]={active:true,level,index:selectedLevel[room],events:newEvents(),moves:0,hintLevel:0,wrongPredictions:0,explained:null,
+    supply:level.supply?.map(id=>room==='stack'?item(id,`Barang ${id}`,1):id)};
+  if(room==='stack'){racks=buildRacks(level.setup);rack=0;selectedItem=null;capacityDrafts=[{},{},{}];}
+  else{queueMode=level.setup.mode;clinic=buildClinic(level.setup);selectedQueue=queueMode==='fifo'?2:1;selectedPatient=null;patientSerial=level.setup.patients.length+1;}
+  notify(`Level ${selectedLevel[room]+1}: ${level.goal}`,false,'misi()');edited[room]=false;render();
 }
 function performTransfer(source,destination,expectedId=null) {
   if(!Number.isInteger(source)||!Number.isInteger(destination)||!racks[source]||!racks[destination])throw new Error('Pilih rak sumber dan tujuan yang valid.');
   if(expectedId&&racks[source].peek()?.id!==expectedId)throw new Error('Barang tersebut sudah bukan top. Pilih barang teratas saat ini.');
   const data=transfer(racks[source],racks[destination]);selectedItem=data.id;lastObject=data.id;
-  traceExecution([{execution:racks[destination].lastExecution,context:`Pindah · peek ${rackNames[source]} → ${data.id}, lalu 1/2 push tujuan ${rackNames[destination]}`},{execution:racks[source].lastExecution,context:`Pindah · 2/2 pop sumber ${rackNames[source]}`}]);
-  if(missions.stack.active&&racks[0].peek()?.id==='B')missions.stack.cleared=true;
-  notify(`${data.id}: ${rackNames[source]} → ${rackNames[destination]}. Urutan: peek sumber → push tujuan → pop sumber. Sumber diubah terakhir agar tetap utuh bila tujuan penuh.`,false,'pindah()');rack=destination;
+  traceExecution([{execution:racks[destination].lastExecution,context:`Pindah · peek ${rackNames[source]} → ${data.id}, lalu 1/2 push tujuan ${rackNames[destination]}`},{execution:racks[source].lastExecution,context:`Pindah · 2/2 pop sumber ${rackNames[source]}`}]);  notify(`${data.id}: ${rackNames[source]} → ${rackNames[destination]}. Urutan: peek sumber → push tujuan → pop sumber. Sumber diubah terakhir agar tetap utuh bila tujuan penuh.`,false,'pindah()');rack=destination;
 }
 function endDrag(returnHome=false) {
   if(!drag)return;
@@ -564,12 +594,16 @@ document.addEventListener('change',event=>{if(event.target.id==='destination')re
 document.addEventListener('click',event=>{
   if(suppressClick){suppressClick=false;event.preventDefault();return;}
   const tap=event.target.closest('[data-quick-push],[data-quick-register]');
-  if(tap&&(tap.dataset.quickPush||tap.dataset.quickRegister)){run(()=>tap.dataset.quickPush?pushItem(nextSupply()):registerPatient({id:missions.queue.supply?.shift()??`P${String(patientSerial).padStart(2,'0')}`,name:patientNames[patientSerial%patientNames.length],priority:priorities[selectedQueue]}));return;}
+  if(tap&&(tap.dataset.quickPush||tap.dataset.quickRegister)){pendingLabel=tap.dataset.quickPush?'push':'daftar';run(()=>tap.dataset.quickPush?pushItem(nextSupply()):registerPatient({id:missions.queue.supply?.shift()??`P${String(patientSerial).padStart(2,'0')}`,name:patientNames[patientSerial%patientNames.length],priority:priorities[selectedQueue]}));return;}
   const quick=event.target.closest('[data-quick]');
   if(quick){document.querySelector(`#controls [data-action="${quick.dataset.quick}"]`)?.click();return;}
-  const button=event.target.closest('[data-room],[data-item],[data-patient],[data-rack],[data-queue],[data-action],[data-mode],[data-predict],[data-hint],[data-warmup-answer],[data-warmup-next],[data-warmup-reset]');
+  const button=event.target.closest('[data-room],[data-item],[data-patient],[data-rack],[data-queue],[data-action],[data-mode],[data-predict],[data-hint],[data-warmup-answer],[data-warmup-next],[data-warmup-reset],[data-level],[data-explain],[data-run-plan],[data-clear-plan]');
   if(!button)return;
   if(button.dataset.hint){const m=missions[room];m.hintLevel=Math.min(3,(m.hintLevel??0)+1);renderMission();return;}
+  if(button.dataset.level!==undefined){cancelPlan();selectedLevel[room]=Number(button.dataset.level);if(button.dataset.autostart){edited[room]=false;loadLevel();}else renderMission();return;}
+  if(button.dataset.explain!==undefined){missions[room].explained=Number(button.dataset.explain);renderMission();return;}
+  if(button.dataset.runPlan){runPlan();return;}
+  if(button.dataset.clearPlan){plan=[];renderMission();return;}
   if(button.dataset.warmupAnswer){answerWarmup(button.dataset.warmupAnswer);return;}
   if(button.dataset.warmupNext){
     const state=warmups[room];if(!state.answered||state.step>=warmupQuestions[room].length-1)return;
@@ -578,7 +612,7 @@ document.addEventListener('click',event=>{
   }
   if(button.dataset.warmupReset){warmups[room]=newWarmup(room);renderWarmup();document.querySelector('#warmup-choices button')?.focus({preventScroll:true});return;}
   if(button.dataset.room) {
-    endDrag();room=button.dataset.room;lastResult=null;camera.zoom=defaultZoom();camera.focus=camera.zoom>1;stopTrace();trace=null;clearTimeout(achievementTimer);$('achievement').hidden=true;feedback={text:room==='stack'?'Pilih rak, lalu coba push atau pop.':'Pilih pasien untuk melihat estimasi tunggu. Panggil pasien saat loket tersedia.',error:false};render();return;
+    endDrag();cancelPlan();room=button.dataset.room;lastResult=null;camera.zoom=defaultZoom();camera.focus=camera.zoom>1;stopTrace();trace=null;clearTimeout(achievementTimer);$('achievement').hidden=true;feedback={text:room==='stack'?'Pilih rak, lalu coba push atau pop.':'Pilih pasien untuk melihat estimasi tunggu. Panggil pasien saat loket tersedia.',error:false};render();return;
   }
   if(button.dataset.mode) {
     if(queueMode!==button.dataset.mode) replaceExperiment('Mengganti mode akan mengganti seluruh antrean dengan data contoh, mengosongkan laporan, dan menghentikan pelayanan saat ini.',()=>{queueMode=button.dataset.mode;missions.queue={active:false};drafts.queue={};seedQueue();stopTrace();trace=null;edited.queue=false;notify('Mode diubah. Antrean dimuat ulang untuk eksperimen baru.');render();});return;
@@ -593,6 +627,8 @@ document.addEventListener('click',event=>{
   if(button.dataset.rack!==undefined){rack=Number(button.dataset.rack);selectedItem=button.dataset.item??null;render();return;}
   if(button.dataset.queue!==undefined){selectedQueue=Number(button.dataset.queue);selectedPatient=null;render();return;}
   const action=button.dataset.action;
+  const source=rack,destination=Number($('destination').value);
+  pendingLabel=action==='transfer'?`pindah ${rackNames[source]} → ${rackNames[destination]}`:action==='call'?'panggil':action==='next-event'?'selesaikan':action;
   run(()=>{
     if(action==='peek'||action==='empty') {
       const structure=room==='stack'?racks[rack]:clinic.queues[selectedQueue];
@@ -608,27 +644,27 @@ document.addEventListener('click',event=>{
       const data=racks[rack].pop(); selectedItem=null;
       lastResult={operation:'pop()',value:data?.id??null};
       traceExecution([{execution:racks[rack].lastExecution,context:`${rackNames[rack]} · pop`}]);
-      if(data?.id==='B'&&missions.stack.active)missions.stack.removed=true;
+      if(missions.stack.active)missions.stack.events.popped.push(data?.id??null);
       notify(data?`pop() → ${data.id} (${data.name}). Top sekarang ${racks[rack].peek()?.id??'None'}.`:'Underflow: Stack kosong. pop() mengembalikan None.',!data,'pop()');
     }
     if(action==='transfer') {
-      performTransfer(rack,Number($('destination').value));
+      performTransfer(source,destination);
     }
     if(action==='call') {
       const q=clinic.queues.find(q=>!q.isEmpty());
       const p=clinic.call();selectedPatient=null;
       lastResult={operation:'dequeue()',value:p?.id??null};
+      if(missions.queue.active)missions.queue.events.called.push(p?.id??null);
       if(p)selectedQueue=priorities.indexOf(p.priority);
       if(q)traceExecution([{execution:q.lastExecution,context:`Jalur ${priorityNames[selectedQueue]} · dequeue`}]);
       else setTrace(['if semua_jalur_kosong:', '    return None'], ['Semua Queue kosong; tidak ada jalur untuk dipanggil.', 'Pemanggilan mengembalikan None tanpa menjalankan dequeue pada jalur.']);
-      if(missions.queue.active&&p?.id==='P02'&&missions.queue.servedCritical&&clinic.queues[1].peek()?.id==='P03')missions.queue.fifo=true;
       notify(p?`${p.id} (${p.name}) mulai dilayani. ${queueMode==='fifo'?'FIFO memilih pasien terdepan.':priorityNames[selectedQueue]+' adalah jalur tertinggi yang berisi pasien.'} Selesai ${clock(clinic.active.endsAt)}.`:'Underflow: semua jalur kosong. dequeue() mengembalikan None.',!p,'dequeue()');
     }
     if(action==='advance'||action==='next-event') {
       if(action==='next-event'&&!clinic.active)throw new Error('Belum ada pelayanan berlangsung. Panggil pasien berikutnya dahulu.');
       const minutes=action==='advance'?1:clinic.active.endsAt-clinic.time;
       const done=clinic.advance(minutes);
-      if(done?.id==='P04'&&missions.queue.active&&done.priority==='kritis')missions.queue.servedCritical=true;
+      if(done&&missions.queue.active)missions.queue.events.served.push(done.id);
       notify(done?`${clock()}: ${done.id} selesai dilayani. Loket tersedia untuk pasien berikutnya.`:`Waktu maju ${minutes} menit menjadi ${clock()}.`,false,'waktu()');
     }
     if(action==='cancel') {
@@ -636,7 +672,7 @@ document.addEventListener('click',event=>{
       const values=clinic.queues[rank].values(),index=values.findIndex(p=>p.id===selectedPatient),previous=values[index-1]?.id??'None',next=values[index+1]?.id??'None';
       const p=clinic.cancel(selectedPatient);selectedPatient=null;selectedQueue=rank;
       lastResult={operation:`batalkan(${p.id})`,value:p.id};
-      if(missions.queue.active&&p.id==='P01')missions.queue.cancelled=true;
+      if(missions.queue.active)missions.queue.events.cancelled.push(p.id);
       setTrace(['node = cari_node(id)',index===0?'self.front = node.next':'previous.next = node.next','if self.rear is node:','    self.rear = previous','return node.data'],['Cari pasien pada linked-list, O(n).',index===0?'Node pertama dihapus; perbarui front.':'Lewati node yang dibatalkan; urutan lainnya tetap sama.','Periksa apakah node merupakan rear.',index===values.length-1?'Perbarui rear; None jika antrean kosong.':'Cabang ini dilewati; rear tetap sama.','Kembalikan data pasien yang dibatalkan.'],[`node → ${p.id}`,index===0?`front → ${next}`:`${previous}.next → ${next}`,`rear → ${values.at(-1).id}`,`rear → ${clinic.queues[rank].rear?.data.id??'None'}`,`dibatalkan → ${p.id}`],index===values.length-1?[]:[3]);
       notify(`${p.id} dibatalkan. Urutan pasien lainnya tetap sama; laporan diperbarui.`,false,'batalkan()');
     }
@@ -668,12 +704,8 @@ document.addEventListener('submit',event=>{
     }
   });
 });
-$('start-mission').addEventListener('click',()=>replaceExperiment('Memulai atau mengulang misi akan mengganti isi ruang ini dengan skenario misi. Eksperimen saat ini akan hilang.',()=>{
-  endDrag();stopTrace();trace=null;lastResult=null;drafts[room]={};clearTimeout(achievementTimer);$('achievement').hidden=true;
-  if(room==='stack'){missions.stack={active:true,removed:false,cleared:false,hintLevel:0,wrongPredictions:0};seedStack(true);}else{queueMode='priority';missions.queue={active:true,critical:false,servedCritical:false,fifo:false,cancelled:false,hintLevel:0,wrongPredictions:0};seedQueue(true);}
-  notify(room==='stack'?'Misi dimulai. Cari B, pindahkan D lalu C ke Bantuan, kemudian ambil B.':'Misi dimulai. Daftarkan P04 sebagai kritis melalui registrasi.',false,'misi()');render();
-}));
-$('reset').addEventListener('click',()=>replaceExperiment('Atur ulang akan mengganti isi ruang ini dengan data contoh dan mengakhiri misi yang berjalan.',()=>{endDrag();stopTrace();trace=null;lastResult=null;drafts[room]={};camera.zoom=defaultZoom();camera.focus=camera.zoom>1;clearTimeout(achievementTimer);$('achievement').hidden=true;missions[room]={active:false};if(room==='stack')seedStack();else seedQueue();edited[room]=false;notify('Ruang diatur ulang. Data contoh siap digunakan.',false,'reset()');render();}));
+$('start-mission').addEventListener('click',()=>replaceExperiment('Memuat level akan mengganti isi ruang ini dengan skenario level. Eksperimen saat ini akan hilang.',loadLevel));
+$('reset').addEventListener('click',()=>replaceExperiment('Atur ulang akan mengganti isi ruang ini dengan data contoh dan mengakhiri misi yang berjalan.',()=>{endDrag();cancelPlan();stopTrace();trace=null;lastResult=null;drafts[room]={};camera.zoom=defaultZoom();camera.focus=camera.zoom>1;clearTimeout(achievementTimer);$('achievement').hidden=true;missions[room]={active:false};if(room==='stack')seedStack();else seedQueue();edited[room]=false;notify('Ruang diatur ulang. Data contoh siap digunakan.',false,'reset()');render();}));
 $('replace-confirm').addEventListener('close',()=>{
   const action=pendingReplacement;pendingReplacement=null;
   if($('replace-confirm').returnValue==='replace')action?.();
@@ -692,7 +724,7 @@ $('zoom-out').addEventListener('click',()=>{camera.zoom=Math.max(1,Math.round((c
 $('focus-object').addEventListener('click',()=>{camera.focus=!camera.focus;if(camera.focus)camera.zoom=Math.max(1.4,camera.zoom);applyCamera();});
 $('reset-camera').addEventListener('click',()=>{camera.zoom=defaultZoom();camera.focus=camera.zoom>1;applyCamera();});
 $('motion-speed').addEventListener('change',()=>{motionSpeed=Number($('motion-speed').value);const playing=!!traceTimer;stopTrace();if(playing)playTrace();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){stopTrace();endDrag();document.getAnimations().forEach(a=>a.cancel());}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){cancelPlan();stopTrace();endDrag();document.getAnimations().forEach(a=>a.cancel());}});
 $('trace-prev').addEventListener('click',()=>{stopTrace();if(trace&&trace.steps.indexOf(traceIndex)>0)traceIndex=trace.steps[trace.steps.indexOf(traceIndex)-1];renderTrace();});
 $('trace-next').addEventListener('click',()=>{stopTrace();if(trace&&trace.steps.indexOf(traceIndex)<trace.steps.length-1)traceIndex=trace.steps[trace.steps.indexOf(traceIndex)+1];renderTrace();});
 function playTrace(){

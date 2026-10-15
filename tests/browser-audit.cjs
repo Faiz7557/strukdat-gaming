@@ -126,6 +126,7 @@ const root = path.resolve(__dirname,'..');
     }
     await page.setViewportSize({width:1440,height:1000});
     await page.locator('[data-room="stack"]:visible').first().click();
+    await page.locator('[data-level="2"]').click();
     await page.locator('#start-mission').click();
     for(let i=0;i<3;i++)await page.locator('#mission-hint').click();
     await page.locator('#controls [data-predict="A"]').click();
@@ -181,6 +182,7 @@ const root = path.resolve(__dirname,'..');
     assert.equal(await page.locator('#destination').inputValue(),'1');
 
     await page.locator('[data-room="queue"]:visible').first().click();
+    await page.locator('[data-level="4"]').click();
     await page.locator('#start-mission').click();
     await page.locator('#register-form button').click();
     await page.locator('#controls [data-action="call"]').click();
