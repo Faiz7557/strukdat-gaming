@@ -263,7 +263,7 @@
   ],
   "checks": [
     "responsive",
-    "beginner-challenges-both-rooms-keyboard-and-retry",
+    "all-20-beginner-questions-keyboard-retry-and-empty-states",
     "missions-stack-and-queue",
     "stateful-prediction",
     "replacement-cancel-confirm-escape",

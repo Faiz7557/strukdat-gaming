@@ -76,14 +76,36 @@ const root = path.resolve(__dirname,'..');
       assert.equal(await page.locator('.warmup-data li').count(),2);
       await page.locator('[data-warmup-next]').click();
       await page.locator('[data-warmup-answer="peek"]').click();
-      assert.equal(await page.locator('#warmup-progress').innerText(),'3 / 3 selesai');
-      assert.equal(await page.locator('.warmup-data li').count(),2);
+      assert.equal(await page.locator('#warmup-progress').innerText(),'3 / 10 selesai');
+      const remaining=room==='stack'?['False','True','None','None','C','B','C,B']:['False','True','None','None','B','C','A,B'];
+      for(const [index,answer] of remaining.entries()){
+        await page.locator('[data-warmup-next]').click();
+        assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+        const before=await page.locator('.warmup-data strong').allTextContents();
+        const wrong=await page.locator('[data-warmup-answer]').evaluateAll((buttons,correct)=>buttons.find(button=>button.dataset.warmupAnswer!==correct).dataset.warmupAnswer,answer);
+        await page.locator(`[data-warmup-answer="${wrong}"]`).click();
+        assert.match(await page.locator('#warmup-feedback').innerText(),/Belum tepat/);
+        assert.deepEqual(await page.locator('.warmup-data strong').allTextContents(),before);
+        await page.locator(`[data-warmup-answer="${answer}"]`).click();
+        assert.equal(await page.locator('#warmup-progress').innerText(),`${index+4} / 10 selesai`);
+        if(index===2){
+          assert.deepEqual(await page.locator('.warmup-data strong').allTextContents(),['None']);
+          for(const width of [1440,320]){
+            await page.setViewportSize({width,height:1000});
+            await page.locator('.warmup').scrollIntoViewIfNeeded();
+            assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+            await page.screenshot({path:path.join(output,`warmup-${room}-empty-${width}.png`)});
+          }
+        }
+      }
+      assert.equal(await page.locator('#warmup-progress').innerText(),'10 / 10 selesai');
+      assert.equal(await page.locator('.warmup-data li').count(),1);
       assert.equal(await page.locator('#scene').innerHTML(),arena);
       assert.equal(await page.locator('#mission-status').innerText(),mission);
       await page.locator('#toggle-warmup').click();await page.locator('#toggle-warmup').click();
-      assert.equal(await page.locator('#warmup-progress').innerText(),'3 / 3 selesai');
+      assert.equal(await page.locator('#warmup-progress').innerText(),'10 / 10 selesai');
       await page.locator('[data-warmup-reset]').click();
-      assert.equal(await page.locator('#warmup-progress').innerText(),'0 / 3 selesai');
+      assert.equal(await page.locator('#warmup-progress').innerText(),'0 / 10 selesai');
       await page.locator('#toggle-warmup').click();
     }
     await page.setViewportSize({width:1440,height:1000});
@@ -197,7 +219,7 @@ const root = path.resolve(__dirname,'..');
     assert.equal(await touch.evaluate(()=>document.getAnimations().length),0);
     await touchContext.close();
     assert.deepEqual(errors,[]);
-    await writeFile(path.join(output,'results.json'),JSON.stringify({viewports:results,checks:['responsive','beginner-challenges-both-rooms-keyboard-and-retry','missions-stack-and-queue','stateful-prediction','replacement-cancel-confirm-escape','draft-persistence','svg-keyboard-focus','reduced-motion','synthesized-touch-scroll-and-drag'],errors},null,2));
-    console.log(`Browser audit passed: ${results.length} room/viewport combinations, beginner challenges, both missions, prediction, replacement, drafts, keyboard focus, touch and reduced motion.`);
+    await writeFile(path.join(output,'results.json'),JSON.stringify({viewports:results,checks:['responsive','all-20-beginner-questions-keyboard-retry-and-empty-states','missions-stack-and-queue','stateful-prediction','replacement-cancel-confirm-escape','draft-persistence','svg-keyboard-focus','reduced-motion','synthesized-touch-scroll-and-drag'],errors},null,2));
+    console.log(`Browser audit passed: ${results.length} room/viewport combinations, all 20 beginner questions, both missions, prediction, replacement, drafts, keyboard focus, touch and reduced motion.`);
   } finally { await browser.close(); }
 })().catch(error=>{console.error(error);process.exitCode=1;});

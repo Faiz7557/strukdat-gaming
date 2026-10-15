@@ -1,5 +1,6 @@
 import { Stack, Queue, Clinic, transfer, priorities } from './model.js';
 import { lessons } from './execution.js';
+import { warmupQuestions } from './challenges.js';
 
 const $ = id => document.getElementById(id);
 const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -47,48 +48,37 @@ function seedQueue(mission = false) {
 }
 seedStack(); seedQueue();
 
-function newWarmup(kind) {
+function newWarmup(kind,step=0) {
   const structure=kind==='stack'?new Stack():new Queue();
-  for(const id of ['A','B'])structure[kind==='stack'?'push':'enqueue'](item(id,`Data ${id}`,1));
-  return {structure,step:0,answered:false,message:'',error:false};
+  for(const id of warmupQuestions[kind][step].initial)structure[kind==='stack'?'push':'enqueue'](item(id,`Data ${id}`,1));
+  return {structure,step,answered:false,message:'',error:false};
 }
 const warmups={stack:newWarmup('stack'),queue:newWarmup('queue')};
 let warmupOpen=false;
 
 function renderWarmup() {
   const state=warmups[room],stack=room==='stack',values=state.structure.values();
-  const add=stack?'push':'enqueue',remove=stack?'pop':'dequeue',done=state.step+Number(state.answered);
+  const question=warmupQuestions[room][state.step],total=warmupQuestions[room].length,done=state.step+Number(state.answered),complete=done===total;
   $('warmup-title').textContent=`Tantangan pemula · ${stack?'Stack':'Queue'}`;
-  $('warmup-progress').textContent=`${done} / 3 selesai`;
-  $('toggle-warmup').textContent=warmupOpen?'Tutup latihan':done===0?'Mulai latihan':done===3?'Lihat hasil':'Lanjutkan latihan';
+  $('warmup-summary').textContent=`${total} soal singkat: operasi dasar, kondisi kosong, dan urutan data.`;
+  $('warmup-progress').textContent=`${done} / ${total} selesai`;
+  $('toggle-warmup').textContent=warmupOpen?'Tutup latihan':done===0?'Mulai latihan':complete?'Lihat hasil':'Lanjutkan latihan';
   $('toggle-warmup').setAttribute('aria-expanded',String(warmupOpen));
   $('warmup-body').hidden=!warmupOpen;
-  const questions=[`A masuk lebih dulu, lalu B. Tambahkan C ${stack?'ke atas tumpukan':'ke belakang antrean'}. Operasi mana yang tepat?`,`${stack?'Stack':'Queue'} kini berisi A, B, C berdasarkan urutan masuk. Jika ${remove}() dijalankan, data mana yang keluar?`,`Sekarang ${stack?'top':'front'} menunjuk B. Lihat datanya tanpa menghapus. Operasi mana yang tepat?`];
-  const description=done===3?`${stack?'Stack mengeluarkan data terakhir masuk (LIFO).':'Queue mengeluarkan data pertama masuk (FIFO).'} peek() membaca data tanpa mengubah isi struktur.`:state.answered?'Amati hasilnya pada diagram, lalu lanjutkan ke langkah berikutnya.':questions[state.step];
-  const choices=state.step===0?[['add',`Tambah C / ${add}(C)`],['remove',`Ambil / ${remove}()`],['peek','Lihat / peek()']]:state.step===1?['A','B','C'].map(id=>[id,id]):[['remove',`Ambil / ${remove}()`],['peek','Lihat / peek()'],['empty','Cek kosong / isEmpty()']];
-  const diagram=values.map((value,i)=>`<li><span>${i===0?stack?'top':'front':i===values.length-1?stack?'dasar':'rear':'data'}</span><strong>${escape(value.id)}</strong></li>`).join('');
-  $('warmup-exercise').innerHTML=`<ol class="warmup-steps" aria-label="Langkah latihan">${['Tambah data','Tebak yang keluar','Baca tanpa menghapus'].map((title,i)=>`<li ${i===state.step&&done<3?'aria-current="step"':''}>${i<done?icon('check'):`${i+1}.`} ${title}</li>`).join('')}</ol><div class="warmup-grid"><div><h3>${done===3?'Tiga tantangan selesai.':`Langkah ${state.step+1}${state.answered?' selesai':': '+['Tambahkan satu data','Amati urutan keluar','Lihat tanpa mengambil'][state.step]}`}</h3><p>${description}</p><div id="warmup-choices" class="warmup-choices">${state.answered?'':choices.map(([answer,label])=>`<button class="secondary" data-warmup-answer="${answer}">${label}</button>`).join('')}</div><div class="warmup-actions">${state.answered&&done<3?'<button class="primary" data-warmup-next="true">Lanjut ke langkah berikutnya</button>':''}${done===3?'<a class="secondary" href="#simulation">Coba di arena</a>':''}<button class="text-button" data-warmup-reset="true">Ulangi latihan</button></div></div><div class="warmup-preview"><h3>${stack?'Stack latihan':'Queue latihan · FIFO dasar'}</h3><p>${stack?'Dibaca dari top menuju dasar.':'Dibaca dari front menuju rear; tanpa prioritas dan waktu pelayanan.'}</p><ul class="warmup-data" aria-label="${stack?'Urutan dari top ke dasar':'Urutan dari front ke rear'}">${diagram}</ul><p>Jumlah data: <strong>${values.length}</strong></p></div></div>`;
+  const description=complete?`${stack?'LIFO':'FIFO'}, peek, kondisi kosong, dan perubahan referensi sudah kamu coba. Lanjutkan bereksperimen di arena.`:state.answered?'Amati hasilnya pada diagram. Soal berikutnya memuat skenario latihan sendiri.':question.prompt;
+  const diagram=values.map((value,i)=>`<li><span>${i===0?stack?'top':values.length===1?'front / rear':'front':i===values.length-1?stack?'dasar':'rear':'data'}</span><strong>${escape(value.id)}</strong></li>`).join('')||`<li class="warmup-empty"><span>${stack?'top':'front / rear'}</span><strong>None</strong></li>`;
+  $('warmup-exercise').innerHTML=`<p class="warmup-steps">${complete?'Latihan selesai':`Soal ${state.step+1} dari ${total}`}</p><div class="warmup-grid"><div><h3>${complete?`${total} soal selesai.`:escape(question.title)+(state.answered?' · selesai':'')}</h3><p>${escape(description)}</p><div id="warmup-choices" class="warmup-choices">${state.answered?'':question.choices.map(([answer,label])=>`<button class="secondary" data-warmup-answer="${escape(answer)}">${escape(label)}</button>`).join('')}</div><div class="warmup-actions">${state.answered&&!complete?'<button class="primary" data-warmup-next="true">Lanjut ke soal berikutnya</button>':''}${complete?'<a class="secondary" href="#simulation">Coba di arena</a>':''}<button class="text-button" data-warmup-reset="true">Ulangi latihan</button></div></div><div class="warmup-preview"><h3>${stack?'Stack latihan':'Queue latihan · FIFO dasar'}</h3><p>${stack?'Dibaca dari top menuju dasar.':'Dibaca dari front menuju rear; tanpa prioritas dan waktu pelayanan.'}</p><ul class="warmup-data" aria-label="${stack?'Urutan dari top ke dasar':'Urutan dari front ke rear'}">${diagram}</ul><p>Jumlah data: <strong>${values.length}</strong></p></div></div>`;
   $('warmup-feedback').textContent=state.message;
   $('warmup-feedback').classList.toggle('error',state.error);
 }
 
 function answerWarmup(answer) {
   const state=warmups[room];if(state.answered)return;
-  const stack=room==='stack',expected=state.step===0?'add':state.step===1?state.structure.peek().id:'peek';
-  if(!['add','remove','peek','empty','A','B','C'].includes(answer))return;
-  state.error=answer!==expected;
-  if(state.error){
-    state.message=['Belum tepat. Pilih operasi yang menambah data; mengambil atau melihat tidak menambah C.',`Belum tepat. Amati ${stack?'top dan aturan terakhir masuk, pertama keluar':'front dan aturan pertama masuk, pertama keluar'}. Coba lagi.`,'Belum tepat. Ambil menghapus data, sedangkan cek kosong hanya memberi True/False. Pilih operasi yang membaca data.'][state.step];
-  }else{
-    if(state.step===0){
-      state.structure[stack?'push':'enqueue'](item('C','Data C',1));
-      state.message=stack?'Benar. push(C) menaruh C di top. Urutannya kini C → B → A dari top.':'Benar. enqueue(C) menaruh C di rear. Front tetap A; urutannya A → B → C.';
-    }else if(state.step===1){
-      const removed=state.structure[stack?'pop':'dequeue']();
-      state.message=`Benar. ${removed.id} keluar lewat ${stack?'top':'front'}. ${stack?'Top':'Front'} sekarang B; tersisa dua data.`;
-    }else state.message=`Benar. peek() menghasilkan ${state.structure.peek().id}; jumlah data tetap ${state.structure.count}. Data dibaca tanpa dihapus.`;
-    state.answered=true;
-  }
+  const question=warmupQuestions[room][state.step];
+  if(!question.choices.some(([value])=>value===answer))return;
+  state.error=answer!==question.answer;
+  if(state.error)state.message=`Belum tepat. ${question.hint} Coba lagi.`;
+  else{question.run(state.structure);state.message=`Benar. ${question.explanation}`;state.answered=true;}
   renderWarmup();$('warmup-feedback').focus({preventScroll:true});
 }
 
@@ -501,8 +491,8 @@ document.addEventListener('click',event=>{
   if(!button)return;
   if(button.dataset.warmupAnswer){answerWarmup(button.dataset.warmupAnswer);return;}
   if(button.dataset.warmupNext){
-    const state=warmups[room];if(!state.answered||state.step>=2)return;
-    state.step++;state.answered=false;state.message='';state.error=false;renderWarmup();
+    const state=warmups[room];if(!state.answered||state.step>=warmupQuestions[room].length-1)return;
+    warmups[room]=newWarmup(room,state.step+1);renderWarmup();
     document.querySelector('#warmup-choices button')?.focus({preventScroll:true});return;
   }
   if(button.dataset.warmupReset){warmups[room]=newWarmup(room);renderWarmup();document.querySelector('#warmup-choices button')?.focus({preventScroll:true});return;}

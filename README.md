@@ -16,7 +16,7 @@ Buka http://127.0.0.1:5174. Server memakai Node.js standar dan hanya menyediakan
 
 ## Isi simulasi
 
-- Tantangan pemula: tiga latihan terpisah untuk Stack dan Queue—menambah data, menebak data yang keluar, serta peek tanpa menghapus. Umpan balik dan diagram langsung, retry tanpa penalti, dan progres per ruang selama tab terbuka.
+- Tantangan pemula: 20 soal (10 Stack dan 10 Queue) tentang tambah/ambil/peek, isEmpty, kondisi kosong, underflow, perubahan referensi, serta urutan beberapa operasi. Umpan balik dan diagram langsung, retry tanpa penalti, dan progres per ruang selama tab terbuka.
 
 - Gudang: tiga Stack linked-list, push, pop, peek, isEmpty, pencarian ID, batas jumlah/berat, dan perpindahan barang yang memvalidasi tujuan sebelum mengubah sumber.
 - Misi Stack: ambil B, simpan D dan C pada Stack bantuan, pulihkan A–C–D.

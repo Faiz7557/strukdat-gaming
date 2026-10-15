@@ -221,10 +221,7 @@ body.reduced-motion button:active:not(:disabled){transform:none}
 #warmup-body{border-top:1px solid var(--line);padding:0 20px 20px}
 #warmup-body[hidden]{display:none}
 .warmup-note{margin:16px 0}
-.warmup-steps{list-style:none;display:flex;gap:12px 20px;flex-wrap:wrap;margin:0 0 20px;padding:0;font-size:13px;color:var(--muted)}
-.warmup-steps li{display:flex;align-items:center;gap:6px}
-.warmup-steps .icon{width:16px;height:16px;color:var(--teal-ink)}
-.warmup-steps [aria-current=step]{color:var(--indigo);font-weight:500}
+.warmup-steps{margin:0 0 20px;font-size:13px;font-weight:500;color:var(--indigo)}
 .warmup-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px}
 .warmup-grid h3{font-size:16px;font-weight:500;margin:0 0 8px;line-height:1.5}
 .warmup-grid p{font-size:14px;line-height:1.8;max-width:65ch}
@@ -241,5 +238,5 @@ body.reduced-motion button:active:not(:disabled){transform:none}
 .warmup-feedback{margin:0 0 18px;padding:12px 14px;border:1px solid #beeee0;border-radius:7px;background:#e1faf3;color:var(--teal-ink);font-size:14px;line-height:1.7}
 .warmup-feedback:empty{display:none}.warmup-feedback.error{background:#fff1f3;color:var(--danger);border-color:#efd1d9}
 @media(max-width:700px){.warmup-heading{flex-wrap:wrap}.warmup-heading>div{flex-basis:100%}.warmup-heading>.secondary{margin-left:auto}.warmup-grid{grid-template-columns:1fr;gap:20px}.warmup-preview{border-left:0;border-top:1px solid var(--line);padding:16px 0 0}}
-@media(max-width:540px){.warmup-heading{padding:16px;gap:10px}#warmup-body{padding:0 16px 16px}.warmup-heading h2{font-size:17px}.warmup-steps{gap:8px 12px}.warmup-data{gap:6px}.warmup-data li{flex-basis:58px}.warmup-choices button{flex:1}.warmup-choices button[data-warmup-answer=add]{flex-basis:100%}}
+@media(max-width:540px){.warmup-heading{padding:16px;gap:10px}#warmup-body{padding:0 16px 16px}.warmup-heading h2{font-size:17px}.warmup-data{gap:6px}.warmup-data li{flex-basis:58px}.warmup-choices button{flex:1}.warmup-choices button[data-warmup-answer=add]{flex-basis:100%}}
 

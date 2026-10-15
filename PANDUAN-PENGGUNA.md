@@ -28,7 +28,7 @@ Tidak perlu menjalankan `npm install`. Buka aplikasi melalui alamat server terse
 | Bagian | Kegunaan |
 |---|---|
 | **Stack / Queue** | Berpindah antara gudang barang dan antrean pasien. Di ponsel, tombolnya berada di navigasi bawah. |
-| **Tantangan pemula** | Tiga latihan singkat untuk mengenali operasi dasar sebelum mencoba arena. |
+| **Tantangan pemula** | 10 soal per ruang untuk mengenali operasi dasar, kondisi kosong, dan urutan data sebelum mencoba arena. |
 | **Misi** | Menampilkan tujuan, progres, dan langkah berikutnya setelah misi dimulai. |
 | **Arena isometrik** | Memilih rak, barang, jalur, atau pasien. |
 | **Kontrol arena** | Menambah data, menjalankan operasi, dan mengatur simulasi. Di layar sempit, panel ini berada di bawah arena. |
@@ -45,17 +45,26 @@ Pada ponsel, gunakan **Tambah data & kontrol lengkap** di bawah arena untuk menu
 
 Di bawah judul ruang, temukan **Tantangan pemula**, lalu klik **Mulai latihan**. Latihan menggunakan data sendiri sehingga tidak mengganti barang, pasien, misi, atau rekaman operasi di arena.
 
-Setiap ruang menyediakan tiga langkah:
+Setiap ruang menyediakan **10 soal**, sehingga ada **20 soal** untuk Stack dan Queue. Materinya bertahap:
 
-| Langkah | Pada ruang Stack | Pada ruang Queue |
+| Soal | Materi | Yang kamu latih |
 |---|---|---|
-| **Tambah data** | Pilih `push(C)` untuk menaruh C pada top. | Pilih `enqueue(C)` untuk menaruh C pada rear. |
-| **Tebak yang keluar** | Tentukan data yang keluar jika `pop()` dijalankan. Amati aturan LIFO. | Tentukan data yang keluar jika `dequeue()` dijalankan. Amati aturan FIFO. |
-| **Baca tanpa menghapus** | Pilih `peek()` dan pastikan jumlah data tidak berkurang. | Pilih `peek()` dan pastikan jumlah data tidak berkurang. |
+| 1 | Menambah data | Memilih push atau enqueue. |
+| 2 | Urutan keluar | Membedakan LIFO pada Stack dan FIFO pada Queue. |
+| 3 | Membaca data | Menggunakan peek tanpa menghapus. |
+| 4 | Struktur berisi | Memahami hasil isEmpty saat masih ada data. |
+| 5 | Struktur kosong | Membedakan True, False, dan None. |
+| 6 | Mengambil data terakhir | Mengamati top, atau front dan rear, menjadi None. |
+| 7 | Underflow | Memahami hasil pop/dequeue ketika struktur sudah kosong. |
+| 8 | Operasi campuran | Melanjutkan urutan tambah–ambil–tambah. |
+| 9 | Perubahan referensi | Mengikuti perpindahan top pada Stack atau rear yang tetap pada Queue. |
+| 10 | Dua kali mengambil | Menentukan urutan dua data yang keluar. |
 
-Setelah menjawab, baca penjelasannya dan amati diagram. Jawaban salah tidak mengubah data latihan; kamu dapat langsung mencoba lagi. Jawaban benar menjalankan operasi pada struktur latihan. Klik **Lanjut ke langkah berikutnya** untuk meneruskan.
+Setiap soal memuat skenario sendiri; baca pertanyaan dan amati diagram awal sebelum menjawab. Saat kosong, diagram menampilkan `top → None` untuk Stack atau `front / rear → None` untuk Queue. Jika Queue hanya berisi satu data, node yang sama diberi label **front / rear**.
 
-Setelah ketiga langkah selesai, klik **Coba di arena** untuk menerapkan konsep pada simulasi utama. **Tutup latihan** menyembunyikan bagian ini tanpa menghapus progres; **Ulangi latihan** mengembalikan latihan ruang tersebut ke awal. Stack dan Queue memiliki progres terpisah selama halaman terbuka. Latihan Queue memakai FIFO dasar, tanpa prioritas atau waktu pelayanan.
+Setelah menjawab, baca penjelasannya dan amati diagram. Jawaban salah tidak mengubah data latihan; kamu dapat langsung mencoba lagi. Jawaban benar menjalankan operasi atau pemeriksaan pada struktur latihan. Klik **Lanjut ke soal berikutnya** untuk meneruskan.
+
+Setelah kesepuluh soal ruang tersebut selesai, klik **Coba di arena** untuk menerapkan konsep pada simulasi utama. **Tutup latihan** menyembunyikan bagian ini tanpa menghapus progres; **Ulangi latihan** mengembalikan latihan ruang tersebut ke awal. Stack dan Queue memiliki progres terpisah selama halaman terbuka. Latihan Queue memakai FIFO dasar, tanpa prioritas atau waktu pelayanan.
 
 ## 3. Menggunakan Gudang Stack
 

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import { Stack, Queue, Clinic, transfer, priorities } from '../model.js';
 import { lessons } from '../execution.js';
+import { warmupQuestions } from '../challenges.js';
 
 // A small DOM sink tests event wiring and generated markup without a browser or network.
 function view() {
@@ -23,7 +24,7 @@ function view() {
     activeElement:element('body'),
     addEventListener:(type,handler)=>listeners.set(`document:${type}`,handler),
   };
-  const context = vm.createContext({ document, Stack, Queue, Clinic, transfer, priorities, lessons,
+  const context = vm.createContext({ document, Stack, Queue, Clinic, transfer, priorities, lessons, warmupQuestions,
     matchMedia:()=>({matches:true}),getComputedStyle:()=>({transform:'none'}),
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
   });
@@ -47,7 +48,7 @@ test('Beginner challenges teach LIFO and FIFO with real operations while preserv
     assert.equal(vm.runInContext('warmups[room].structure.count',context),2);
     action({warmupAnswer:'add'});action({warmupAnswer:'add'});
     assert.equal(vm.runInContext('warmups[room].structure.count',context),3,'double activation must not add another C');
-    assert.equal(element('warmup-progress').textContent,'1 / 3 selesai');
+    assert.equal(element('warmup-progress').textContent,'1 / 10 selesai');
     action({warmupNext:'true'});
     action({warmupAnswer:kind==='stack'?'A':'C'});
     assert.equal(vm.runInContext('warmups[room].structure.count',context),3);
@@ -56,15 +57,31 @@ test('Beginner challenges teach LIFO and FIFO with real operations while preserv
     action({warmupNext:'true'});action({warmupAnswer:'empty'});
     assert.match(element('warmup-feedback').textContent,/Belum tepat/);
     action({warmupAnswer:'peek'});
-    assert.equal(element('warmup-progress').textContent,'3 / 3 selesai');
+    assert.equal(element('warmup-progress').textContent,'3 / 10 selesai');
     assert.equal(vm.runInContext('warmups[room].structure.count',context),2);
-    assert.match(element('warmup-exercise').innerHTML,/Tiga tantangan selesai/);
+    for(let step=3;step<10;step++){
+      action({warmupNext:'true'});
+      const question=warmupQuestions[kind][step];
+      const before=vm.runInContext('JSON.stringify(warmups[room].structure.values())',context);
+      action({warmupAnswer:'not-an-option'});
+      assert.equal(element('warmup-progress').textContent,`${step} / 10 selesai`);
+      action({warmupAnswer:question.choices.find(([value])=>value!==question.answer)[0]});
+      assert.match(element('warmup-feedback').textContent,/Belum tepat/);
+      assert.equal(vm.runInContext('JSON.stringify(warmups[room].structure.values())',context),before);
+      action({warmupAnswer:question.answer});
+      assert.equal(element('warmup-progress').textContent,`${step+1} / 10 selesai`);
+      const after=vm.runInContext('JSON.stringify(warmups[room].structure.values())',context);
+      action({warmupAnswer:question.answer});
+      assert.equal(vm.runInContext('JSON.stringify(warmups[room].structure.values())',context),after);
+    }
+    assert.match(element('warmup-exercise').innerHTML,/10 soal selesai/);
     assert.equal(element('scene').innerHTML,scene);assert.equal(element('mission-status').textContent,mission);
     assert.equal(vm.runInContext('edited[room]',context),false);
-    click('toggle-warmup');click('toggle-warmup');assert.equal(element('warmup-progress').textContent,'3 / 3 selesai');
-    action({room:kind==='stack'?'queue':'stack'});assert.equal(element('warmup-progress').textContent,'0 / 3 selesai');
-    action({room:kind});assert.equal(element('warmup-progress').textContent,'3 / 3 selesai');
-    action({warmupReset:'true'});assert.equal(element('warmup-progress').textContent,'0 / 3 selesai');
+    click('toggle-warmup');click('toggle-warmup');assert.equal(element('warmup-progress').textContent,'10 / 10 selesai');
+    action({room:kind==='stack'?'queue':'stack'});assert.equal(element('warmup-progress').textContent,'0 / 10 selesai');
+    action({room:kind});assert.equal(element('warmup-progress').textContent,'10 / 10 selesai');
+    action({warmupNext:'true'});assert.equal(vm.runInContext('warmups[room].step',context),9);
+    action({warmupReset:'true'});assert.equal(element('warmup-progress').textContent,'0 / 10 selesai');
     assert.equal(vm.runInContext('warmups[room].structure.count',context),2);
   }
 });
