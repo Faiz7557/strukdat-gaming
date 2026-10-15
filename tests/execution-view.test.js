@@ -7,14 +7,17 @@ import { lessons } from '../execution.js';
 import { warmupQuestions } from '../challenges.js';
 
 // A small DOM sink tests event wiring and generated markup without a browser or network.
-function view() {
+function view({reducedMotion=true}={}) {
   const elements = new Map(), listeners = new Map();
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
-      innerHTML:'', textContent:'', value:id==='destination'?'2':'', style:{}, dataset:{},
-      classList:{contains:()=>false,toggle(){}}, setAttribute(){}, hasAttribute:()=>false, focus(){}, closest:()=>null,
-      showModal(){this.open=true;},
-      getAnimations:()=>[], querySelector:()=>element('queried-child'),
+      innerHTML:'', textContent:'', value:id==='destination'?'2':'', style:{setProperty(){}}, dataset:{},
+      classList:{contains:()=>false,toggle(){},add(){},remove(){}}, setAttribute(){}, getAttribute:()=>null, hasAttribute:()=>false, focus(){}, closest:()=>null,
+      showModal(){this.open=true;}, append(){}, remove(){},
+      animate:()=>({finished:Promise.resolve(),cancel(){}}),
+      getScreenCTM:()=>({a:1,e:0,f:0,inverse(){return this;}}),
+      getBoundingClientRect:()=>({x:0,y:0,width:0,height:0,top:0,left:0,right:0,bottom:0}),
+      getAnimations:()=>[], querySelector:()=>element('queried-child'), querySelectorAll:()=>[],
       addEventListener:(type,handler)=>listeners.set(`${id}:${type}`,handler),
     });
     return elements.get(id);
@@ -25,7 +28,9 @@ function view() {
     addEventListener:(type,handler)=>listeners.set(`document:${type}`,handler),
   };
   const context = vm.createContext({ document, Stack, Queue, Clinic, transfer, priorities, lessons, warmupQuestions,
-    matchMedia:()=>({matches:true}),getComputedStyle:()=>({transform:'none'}),
+    matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),
+    DOMPoint:class{constructor(x=0,y=0){this.x=x;this.y=y;}matrixTransform(){return this;}},
+    getComputedStyle:()=>({transform:'none'}),
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
   });
   const app=readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import .*;\r?$/gm,'');
@@ -184,4 +189,25 @@ test('Stack mission hints follow blockers on Rak B and name unrecoverable missin
   assert.equal(vm.runInContext('completedMissions.has("stack")',context),true);
   const other=view();other.click('start-mission');other.action({action:'pop'});
   assert.match(other.element('mission-next').textContent,/D sudah keluar.*Ulangi misi/);
+});
+
+test('Keyboard users still see explanatory arena motion; only reduced motion disables it',()=>{
+  const moving=view({reducedMotion:false});
+  vm.runInContext('keyboardInput=true',moving.context);
+  assert.equal(vm.runInContext('motionAllowed()',moving.context),true);
+  const reduced=view({reducedMotion:true});
+  assert.equal(vm.runInContext('motionAllowed()',reduced.context),false);
+});
+
+test('Order text always names its reading direction and complexity notes stay about the operation',()=>{
+  const {element,click,action}=view();
+  assert.doesNotMatch(element('structure-note').textContent,/Perekaman/);
+  assert.match(element('structure-note').textContent,/push\/pop: O\(1\)/);
+  click('start-mission');element('destination').value='1';action({action:'transfer'});
+  action({rack:'0'});element('destination').value='1';action({action:'transfer'});
+  action({rack:'0'});action({action:'pop'});
+  action({rack:'1'});element('destination').value='0';action({action:'transfer'});
+  action({rack:'1'});element('destination').value='0';action({action:'transfer'});
+  assert.match(element('mission-description').textContent,/top → D → C → A/);
+  assert.doesNotMatch(element('mission-description').textContent,/A–C–D/);
 });
