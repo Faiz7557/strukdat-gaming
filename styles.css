@@ -310,3 +310,11 @@ h1{font-size:var(--t-section);letter-spacing:-.3px}
 /* ── v2 · ponsel: label ringkas, HUD tidak menimpa kamera ── */
 #scene.compact-labels .rack-meta{display:none}
 @media(max-width:540px){#scene-summary,.scene-hint,.camera-controls output,.camera-controls>span{display:none}.selection-hud{max-width:calc(100% - 96px)}.camera-controls{flex-direction:column;top:10px;right:10px;left:auto;bottom:auto;width:auto;padding:2px}.mission{gap:8px}}
+/* ── v2 · baki hasil & isyarat perubahan ─────────────── */
+.result-tray{position:absolute;left:16px;bottom:84px;display:flex;align-items:center;gap:8px;padding:8px 12px;background:#fff;border:1px solid var(--line-strong);border-radius:var(--r-hud);box-shadow:var(--shadow-1);font-family:Consolas,monospace;font-size:var(--t-code)}
+.result-tray[hidden]{display:none}
+.result-tray strong{font-family:Ubuntu,'Segoe UI',sans-serif;font-size:var(--t-title);color:var(--goal-ink);min-width:28px;text-align:center}
+.result-tray.fresh{outline:2px solid var(--goal);outline-offset:2px}
+.result-tray .result-none strong{color:var(--muted);border:1px dashed var(--line-strong);border-radius:var(--r-control);padding:0 6px}
+.svg-item.changed .box-top,.svg-item.changed .patient-halo{stroke:var(--goal);stroke-width:3}
+@media(max-width:540px){.result-tray{left:8px;bottom:64px;padding:4px 8px}}

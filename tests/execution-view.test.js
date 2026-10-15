@@ -249,3 +249,21 @@ test('Colour carries meaning: neutral boxes, amber target, triage colours for pr
   assert.match(queue,/#b9730f/i,'darurat uses amber');
   assert.match(queue,/data-priority="kritis"/,'priority has a non-colour marker');
 });
+
+test('Return values land in the result tray, including None and repeated operations',()=>{
+  const {element,action}=view();
+  action({action:'pop'});
+  assert.match(element('result-tray').innerHTML,/pop\(\) →<\/span> <strong>D<\/strong>/);
+  action({action:'pop'});
+  assert.match(element('result-tray').innerHTML,/<strong>C<\/strong>/,'second quick pop replaces the first');
+  action({action:'peek'});
+  assert.match(element('result-tray').innerHTML,/peek\(\)[\s\S]*<strong>B<\/strong>/);
+  action({action:'empty'});
+  assert.match(element('result-tray').innerHTML,/<strong>False<\/strong>/);
+  action({rack:'2'});action({action:'pop'});
+  assert.match(element('result-tray').innerHTML,/class="result-none"[\s\S]*None/);
+  action({room:'queue'});
+  assert.equal(element('result-tray').hidden,true,'tray clears when the room changes');
+  action({action:'call'});
+  assert.match(element('result-tray').innerHTML,/dequeue\(\)[\s\S]*<strong>P0\d<\/strong>/);
+});
