@@ -242,3 +242,7 @@ body.reduced-motion button:active:not(:disabled){transform:none}
 
 /* ── v2 · perbaikan cepat ───────────────────────────── */
 strong,b{font-weight:500}
+
+/* ── v2 · sinkron kode ↔ arena ───────────────────────── */
+.svg-item.trace-focus .box-top,.svg-item.trace-focus .patient-halo{stroke:var(--ref);stroke-width:3}
+.trace-auto{display:flex;align-items:center;gap:6px;font-size:var(--t-meta);color:var(--muted);min-height:44px}

@@ -227,3 +227,13 @@ test('World labels scale up to stay readable and phones start focused',()=>{
   assert.equal(vm.runInContext('defaultZoom()',context),1.4,'sink matchMedia matches → phone default');
   assert.equal(vm.runInContext('camera.zoom',view({reducedMotion:false}).context),1,'desktop starts at 100%');
 });
+
+test('Each trace frame names the arena objects it points at',()=>{
+  const {context,element,listeners}=view();
+  element('item-id').value='G07';element('item-name').value='Modul';element('item-weight').value='3';element('item-category').value='Elektronik';
+  listeners.get('document:submit')({target:{id:'push-form'},preventDefault(){}});
+  const ids=vm.runInContext('trace.steps.map(i=>JSON.stringify(traceFocusIds(trace.records[i].frame)))',context).map(json=>JSON.parse(json));
+  assert.deepEqual(ids[0],['D'],'before node creation only top (D) is referenced');
+  assert.ok(ids[1].includes('G07'),'new_node is highlighted once created');
+  assert.deepEqual(ids.at(-1),['G07'],'top ends on the pushed item');
+});

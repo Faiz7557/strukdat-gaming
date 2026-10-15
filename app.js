@@ -114,7 +114,15 @@ function traceExecution(entries) {
     });
   }
   traceIndex = trace.steps[0]; renderTrace();
+  const current = trace;
+  if (traceAuto && motionAllowed()) setTimeout(() => { if (trace === current && !traceTimer) playTrace(); }, 560 / motionSpeed);
 }
+// Map a recorded frame back to arena entities: the structure's entry reference and any freshly created node.
+function traceFocusIds(frame) {
+  const data = id => frame.nodes.find(n => n.id === id)?.data;
+  return [...new Set([frame.refs.top ?? frame.refs.front, frame.refs.new_node].filter(Boolean).map(data).filter(Boolean))];
+}
+let traceAuto = true;
 function renderExecution() {
   const record = trace?.records?.[traceIndex];
   $('foundation-source').textContent = `class Node: PRAKTIKUM 7 Queue.docx › Membuat struktur node. class ${room==='stack'?'Stack: PRAKTIKUM 6 Stack.docx › Membuat struktur stack':'Queue: PRAKTIKUM 7 Queue.docx › Membuat Struktur Queue'}. Baris kosong dihilangkan.`;
@@ -127,9 +135,12 @@ function renderExecution() {
   $('code-extension').textContent = record ? record.lesson.extension : 'Bedah Eksekusi merekam push, pop, enqueue, dan dequeue. Kapasitas, pencarian, pembatalan, dan waktu adalah pengembangan tugas; penjelasannya dibedakan dari rekaman instruksi.';
   if (!record) {
     $('memory-state').innerHTML = '<div class="memory-empty"><span>JALANKAN OPERASI</span><strong>Objek bergerak karena referensi berubah.</strong><p>Coba push satu barang, lalu telusuri barisnya. Amati node baru dibuat, next disambungkan, dan top berpindah. Rekaman akan tetap tersedia saat kamu memilih objek lain.</p></div>';
+    document.querySelectorAll('#scene .trace-focus').forEach(el=>el.classList.remove('trace-focus'));
     return;
   }
   const { frame, previous } = record;
+  const focus = new Set(traceFocusIds(frame));
+  document.querySelectorAll('#scene [data-entity]').forEach(el => el.classList.toggle('trace-focus', focus.has(el.dataset.entity)));
   $('implementation').textContent = record.execution.implementation;
   const target = id => id ? `${id} · ${frame.nodes.find(n=>n.id===id)?.data ?? '?'}` : 'None';
   const refs = Object.entries(frame.refs).map(([name,id])=>{
@@ -635,6 +646,7 @@ function playTrace(){
   traceTimer=setInterval(()=>{const position=trace.steps.indexOf(traceIndex);if(position<trace.steps.length-1){traceIndex=trace.steps[position+1];renderTrace();}else stopTrace();},1100/motionSpeed);
 }
 $('trace-play').addEventListener('click',playTrace);
+$('trace-auto').addEventListener('change',event=>{traceAuto=event.target.checked;if(!traceAuto)stopTrace();});
 $('code').addEventListener('click',event=>{
   const line=event.target.closest('[data-trace-line]');
   if(!line||!trace||!trace.steps.includes(Number(line.dataset.traceLine)))return;
