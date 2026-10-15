@@ -11,7 +11,7 @@ const boxPalette = ['#8790e7','#5560c5','#2f39a9'], goalPalette = ['#e9b25a','#c
 const priorityShades = [['#d27b86','#b24555'],['#d9a04a','#b9730f'],['#7dbccc','#2f8aa0']];
 const laneFills = ['#fbe9ec','#fbf1e0','#e2f4f8'], laneStrokes = ['#b24555','#b9730f','#2f8aa0'];
 let room = 'stack', racks, clinic, rack = 0, selectedItem = null, selectedPatient = null, selectedQueue = 0;
-let queueMode = 'priority', serial = 7, patientSerial = 6, operationCount = 0, lastObject = null;
+let queueMode = 'fifo', serial = 7, patientSerial = 6, operationCount = 0, lastObject = null;
 let missions = { stack: { active:false }, queue: { active:false } };
 let trace = null, traceIndex = 0, traceTimer = null, logs = [];
 let drawnRoom = null;
@@ -301,7 +301,7 @@ function predictionHTML() {
 }
 function renderQueueControls() {
   const all=clinic.queues.flatMap(q=>q.values()), chosen=all.find(p=>p.id===selectedPatient);
-  $('controls').innerHTML=`<section class="control-section"><div class="control-title">Mode antrean <span class="clock-label">${clock()}</span></div><div class="rack-tabs queue-mode"><button data-mode="fifo" class="${queueMode==='fifo'?'active':''}">FIFO dasar</button><button data-mode="priority" class="${queueMode==='priority'?'active':''}">Tiga prioritas</button></div><div class="report"><div><strong>${clinic.served}</strong><span>Dilayani</span></div><div><strong>${clinic.cancelled}</strong><span>Dibatalkan</span></div><div><strong>${clinic.waiting()}</strong><span>Menunggu</span></div></div><div class="service-status">${clinic.active?`Melayani ${escape(clinic.active.patient.id)} · ${escape(clinic.active.patient.name)}<span>Selesai ${clock(clinic.active.endsAt)} · sisa ${Math.max(0,clinic.active.endsAt-clinic.time)} menit</span>`:'Loket tersedia<span>Durasi pelayanan: 5 menit per pasien.</span>'}</div><div class="operation-row"><button class="secondary" data-action="advance">${icon('plus')}1 menit</button><button class="secondary" data-action="next-event">Kejadian berikut</button></div><button class="primary" data-action="call" ${clinic.active?'disabled':''}>${icon('arrow')}Panggil berikutnya / dequeue</button><div class="operation-row"><button class="secondary" data-action="peek">${icon('eye')}Lihat / peek</button><button class="secondary" data-action="empty">isEmpty()</button></div></section>
+  $('controls').innerHTML=`<section class="control-section"><div class="control-title">Mode antrean <span class="clock-label">${clock()}</span></div><div class="rack-tabs queue-mode"><button data-mode="fifo" class="${queueMode==='fifo'?'active':''}">FIFO dasar</button><button data-mode="priority" class="${queueMode==='priority'?'active':''}">Tiga prioritas</button></div><div class="report"><div><strong>${clinic.served}</strong><span>Dilayani</span></div><div><strong>${clinic.cancelled}</strong><span>Dibatalkan</span></div><div><strong>${clinic.waiting()}</strong><span>Menunggu</span></div></div><div class="service-status">${clinic.active?`Melayani ${escape(clinic.active.patient.id)} · ${escape(clinic.active.patient.name)}<span>Selesai ${clock(clinic.active.endsAt)} · sisa ${Math.max(0,clinic.active.endsAt-clinic.time)} menit</span>`:'Loket tersedia<span>Durasi pelayanan: 5 menit per pasien.</span>'}</div><div class="operation-row"><button class="secondary" data-action="advance">${icon('plus')}1 menit</button><button class="secondary" data-action="next-event">Kejadian berikut</button></div><button class="primary" data-action="call" ${clinic.active?'disabled':''}>${icon('arrow')}Panggil berikutnya / dequeue</button><p class="service-next">Berikutnya dilayani: <strong>${escape(nextServedId())}</strong></p><div class="operation-row"><button class="secondary" data-action="peek">${icon('eye')}peek() ${queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}</button><button class="secondary" data-action="empty">isEmpty() ${queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}</button></div></section>
   <section class="control-section"><div class="control-title">Registrasi pasien</div><form id="register-form"><div class="form-grid">${field('ID pasien','patient-id',`P${String(patientSerial).padStart(2,'0')}`,'text',false,'maxlength="12" required')}${field('Nama pasien','patient-name',missions.queue.active?'Dina':'Fajar','text',false,'maxlength="50" required')}<label class="field full">Tingkat kegawatan<select id="patient-priority" ${queueMode==='fifo'?'disabled':''}>${priorities.map((p,i)=>`<option value="${p}" ${queueMode==='fifo'?i===2?'selected':'':i===0?'selected':''}>${priorityNames[i]}</option>`).join('')}</select></label></div><button class="primary">${icon('plus')}Daftarkan / enqueue</button></form></section>
   <section class="control-section"><div class="control-title">Pasien dalam antrean <span>${queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}</span></div><div class="patient-list">${all.length?all.map(p=>`<button data-patient="${escape(p.id)}" data-queue="${priorities.indexOf(p.priority)}" class="${selectedPatient===p.id?'selected':''}" aria-pressed="${selectedPatient===p.id}"><strong>${escape(p.id)} · ${escape(p.name)}</strong><span>±${clinic.estimate(p.id)} mnt</span></button>`).join(''):'<p class="structure-note">Belum ada pasien. Gunakan registrasi di atas.</p>'}</div>${chosen?`<div class="selection-detail"><strong>${escape(chosen.id)} · ${escape(chosen.name)}</strong><span>Datang ${clock(chosen.arrival)} · ${priorityNames[priorities.indexOf(chosen.priority)]}</span><span>Estimasi tunggu: ${clinic.estimate(chosen.id)} menit.</span><span>Berdasarkan antrean saat ini.</span></div><button class="secondary danger-button" data-action="cancel" style="width:100%;margin-top:8px">Batalkan antrean ${escape(chosen.id)}</button>`:''}${predictionHTML()}</section>`;
 }
@@ -397,8 +397,8 @@ function renderHUD() {
   }
   if(room==='stack'){
     const dest=Number($('destination').value);
-    $('quick-actions').innerHTML=`<button class="secondary" data-quick="pop">${icon('up')}Ambil / pop</button><button class="secondary" data-quick="peek">${icon('eye')}Lihat / peek</button><button class="secondary" data-quick="transfer">${icon('arrow')}${rackNames[dest]}</button>`;
-  }else $('quick-actions').innerHTML=`<button class="secondary" data-quick="call" ${clinic.active?'disabled':''}>${icon('arrow')}Panggil</button><button class="secondary" data-quick="next-event" ${clinic.active?'':'disabled'}>Selesaikan</button><button class="secondary" data-quick="peek">${icon('eye')}Lihat / peek</button>`;
+    $('quick-actions').innerHTML=`<button class="primary" data-quick-push="true">${icon('plus')}Simpan / push</button><button class="secondary" data-quick="pop">${icon('up')}Ambil / pop</button><button class="secondary" data-quick="peek">${icon('eye')}Lihat / peek</button><button class="secondary" data-quick="empty">isEmpty?</button><button class="secondary" data-quick="transfer">${icon('arrow')}${rackNames[dest]}</button>`;
+  }else $('quick-actions').innerHTML=`<button class="primary" data-quick-register="true">${icon('plus')}Daftar / enqueue</button><button class="secondary" data-quick="call" ${clinic.active?'disabled':''}>${icon('arrow')}Panggil / dequeue</button><button class="secondary" data-quick="next-event" ${clinic.active?'':'disabled'}>Selesaikan</button><button class="secondary" data-quick="advance">+1 menit</button><button class="secondary" data-quick="peek">${icon('eye')}Lihat / peek</button>`;
 }
 function animateScene(previous, cameraMoved) {
   if(!motionAllowed()||cameraMoved)return;
@@ -465,6 +465,27 @@ function render() {
   }
 }
 
+function nextSupply() {
+  if(missions.stack.supply?.length)return missions.stack.supply.shift();
+  return item(`G${String(serial).padStart(2,'0')}`,'Modul cadangan',1+serial%4);
+}
+function pushItem(data) {
+  if(racks.flatMap(r=>r.values()).some(p=>p.id===data.id))throw new Error('ID barang sudah digunakan. Isi ID yang berbeda.');
+  racks[rack].push(data);serial++;
+  for(const id of ['item-id','item-name','item-weight','item-category'])delete drafts.stack[id];
+  selectedItem=data.id;lastObject=data.id;
+  traceExecution([{execution:racks[rack].lastExecution,context:`${rackNames[rack]} · push`}]);
+  notify(`push(${data.id}) berhasil. Top ${rackNames[rack]} sekarang ${data.id}; berat ${racks[rack].weight} kg.`,false,`push(${data.id})`);
+}
+const patientNames=['Fajar','Gita','Hadi','Intan','Joko','Kirana','Lutfi','Maya'];
+function registerPatient(input) {
+  const priority=queueMode==='fifo'?'non-darurat':input.priority,rank=priorities.indexOf(priority),q=clinic.queues[rank];
+  const p=clinic.register({...input,priority});patientSerial++;drafts.queue={};selectedPatient=p.id;selectedQueue=rank;lastObject=p.id;
+  traceExecution([{execution:q.lastExecution,context:`Jalur ${priorityNames[rank]} · enqueue`}]);
+  if(missions.queue.active&&p.id==='P04'&&priority==='kritis')missions.queue.critical=true;
+  notify(`${p.id} masuk dari rear ${queueMode==='fifo'?'antrean FIFO':'jalur '+priorityNames[rank]}. Estimasi tunggu ${clinic.estimate(p.id)} menit berdasarkan antrean saat ini.`,false,`enqueue(${p.id})`);
+}
+const nextServedId=()=>clinic.queues.find(q=>!q.isEmpty())?.peek()?.id??'None';
 function run(operation) {
   try { operation(); render(); } catch(error) { stopTrace(); trace=null; renderTrace(); notify(error.message,true); $('feedback').focus(); }
 }
@@ -529,6 +550,8 @@ document.addEventListener('change',event=>{if(event.target.closest('#push-form,#
 document.addEventListener('change',event=>{if(event.target.id==='destination')renderHUD();});
 document.addEventListener('click',event=>{
   if(suppressClick){suppressClick=false;event.preventDefault();return;}
+  const tap=event.target.closest('[data-quick-push],[data-quick-register]');
+  if(tap&&(tap.dataset.quickPush||tap.dataset.quickRegister)){run(()=>tap.dataset.quickPush?pushItem(nextSupply()):registerPatient({id:missions.queue.supply?.shift()??`P${String(patientSerial).padStart(2,'0')}`,name:patientNames[patientSerial%patientNames.length],priority:priorities[selectedQueue]}));return;}
   const quick=event.target.closest('[data-quick]');
   if(quick){document.querySelector(`#controls [data-action="${quick.dataset.quick}"]`)?.click();return;}
   const button=event.target.closest('[data-room],[data-item],[data-patient],[data-rack],[data-queue],[data-action],[data-mode],[data-predict],[data-warmup-answer],[data-warmup-next],[data-warmup-reset]');
@@ -562,7 +585,8 @@ document.addEventListener('click',event=>{
       lastResult={operation:action==='peek'?'peek()':'isEmpty()',value:result==='None'?null:result};
       const pointer=room==='stack'?'top':'front';
       if(action==='peek'){if(room==='stack')selectedItem=structure.peek()?.id??null;else selectedPatient=structure.peek()?.id??null;}
-      notify(`${action}() → ${result}. Isi ${room==='stack'?rackNames[rack]:'jalur '+priorityNames[selectedQueue]} tetap sama.`,false,`${action}()`);
+      const lane=room==='stack'?rackNames[rack]:`jalur ${queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}`;
+      notify(`${action==='peek'?'peek()':'isEmpty()'} ${lane} → ${result}. Isi tetap sama.${room==='queue'&&queueMode!=='fifo'?` Berikutnya dilayani: ${nextServedId()}.`:''}`,false,`${action}()`);
       setTrace(action==='empty'?['def isEmpty(self):',`    return self.${pointer} is None`]:['def peek(self):',`    if self.${pointer} is None:`,`        return None`,`    return self.${pointer}.data`],action==='empty'?['Periksa referensi utama.','Kembalikan hasil tanpa mengubah struktur.']:['Lihat elemen terdepan.','Periksa kondisi kosong.','Dijalankan hanya jika kosong.','Kembalikan data tanpa menghapus node.'],action==='empty'?[`${pointer} → ${structure.peek()?.id??'None'}`,`hasil → ${result}`]:[`${pointer} → ${structure.peek()?.id??'None'}`,`${pointer} → ${structure.peek()?.id??'None'}`,structure.isEmpty()?'hasil → None':'Cabang dilewati',`hasil → ${result}`],action==='peek'?[structure.isEmpty()?3:2]:[]);
     }
     if(action==='pop') {
@@ -610,13 +634,7 @@ document.addEventListener('submit',event=>{
   event.preventDefault();
   run(()=>{
     if(event.target.id==='push-form') {
-      const data=item($('item-id').value.trim(),$('item-name').value.trim(),Number($('item-weight').value),$('item-category').value);
-      if(racks.flatMap(r=>r.values()).some(p=>p.id===data.id))throw new Error('ID barang sudah digunakan. Isi ID yang berbeda.');
-      racks[rack].push(data);serial++;
-      for(const id of ['item-id','item-name','item-weight','item-category'])delete drafts.stack[id];
-      selectedItem=data.id;lastObject=data.id;
-      traceExecution([{execution:racks[rack].lastExecution,context:`${rackNames[rack]} · push`}]);
-      notify(`push(${data.id}) berhasil. Top ${rackNames[rack]} sekarang ${data.id}; berat ${racks[rack].weight} kg.`,false,`push(${data.id})`);
+      pushItem(item($('item-id').value.trim(),$('item-name').value.trim(),Number($('item-weight').value),$('item-category').value));
     }
     if(event.target.id==='capacity-form') {
       const maxItems=Number($('max-items').value),maxWeight=Number($('max-weight').value),s=racks[rack];
@@ -631,11 +649,7 @@ document.addEventListener('submit',event=>{
       notify(`${id} ada di ${rackNames[rack]}. ${blockers?`${blockers} penghalang perlu dipindahkan sebelum target diambil.`:'Barang berada di top dan dapat diambil langsung.'}`,false,'cari()');
     }
     if(event.target.id==='register-form') {
-      const priority=queueMode==='fifo'?'non-darurat':$('patient-priority').value,rank=priorities.indexOf(priority),q=clinic.queues[rank];
-      const p=clinic.register({id:$('patient-id').value.trim(),name:$('patient-name').value.trim(),priority});patientSerial++;drafts.queue={};selectedPatient=p.id;selectedQueue=rank;lastObject=p.id;
-      traceExecution([{execution:q.lastExecution,context:`Jalur ${priorityNames[rank]} · enqueue`}]);
-      if(missions.queue.active&&p.id==='P04'&&priority==='kritis')missions.queue.critical=true;
-      notify(`${p.id} masuk dari rear ${queueMode==='fifo'?'antrean FIFO':'jalur '+priorityNames[rank]}. Estimasi tunggu ${clinic.estimate(p.id)} menit berdasarkan antrean saat ini.`,false,`enqueue(${p.id})`);
+      registerPatient({id:$('patient-id').value.trim(),name:$('patient-name').value.trim(),priority:$('patient-priority').value});
     }
   });
 });

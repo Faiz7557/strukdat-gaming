@@ -149,7 +149,7 @@ test('Predictions follow current top and next patient; wrong answers allow anoth
   assert.match(element('controls').innerHTML,/Belum tepat/);
   action({predict:'C'});
   assert.match(element('controls').innerHTML,/Benar. C berada pada top/);
-  vm.runInContext("room='queue';missions.queue={active:true};seedQueue(true);clinic.register({id:'P04',name:'Dina',priority:'kritis'});render();",context);
+  vm.runInContext("room='queue';queueMode='priority';missions.queue={active:true};seedQueue(true);clinic.register({id:'P04',name:'Dina',priority:'kritis'});render();",context);
   action({predict:'P04'});assert.match(element('controls').innerHTML,/Benar. P04 berada pada front/);
   action({action:'call'});assert.doesNotMatch(element('controls').innerHTML,/data-predict=/);
   action({action:'next-event'});
@@ -167,7 +167,7 @@ test('Reset, mode switch, and mission replacement preserve work when cancelled',
   decide('cancel');assert.equal(vm.runInContext('racks[0].peek().id',context),'C');
   click('start-mission');decide('cancel');assert.equal(vm.runInContext('missions.stack.active',context),false);
   click('reset');decide('replace');assert.equal(vm.runInContext('racks[0].peek().id',context),'D');
-  action({room:'queue'});action({action:'call'});
+  action({room:'queue'});action({mode:'priority'});action({action:'call'});
   action({mode:'fifo'});decide('cancel');
   assert.equal(vm.runInContext('queueMode',context),'priority');
   assert.equal(vm.runInContext('clinic.active.patient.id',context),'P04');
@@ -266,4 +266,24 @@ test('Return values land in the result tray, including None and repeated operati
   assert.equal(element('result-tray').hidden,true,'tray clears when the room changes');
   action({action:'call'});
   assert.match(element('result-tray').innerHTML,/dequeue\(\)[\s\S]*<strong>P0\d<\/strong>/);
+});
+
+test('One-tap push and register use generated data and the same model path as the forms',()=>{
+  const {context,element,action}=view();
+  action({quickPush:'true'});
+  assert.equal(vm.runInContext('racks[0].peek().id',context),'G07');
+  assert.match(element('feedback').innerHTML,/push\(G07\) berhasil/);
+  action({room:'queue'});
+  assert.equal(vm.runInContext('queueMode',context),'fifo','Queue opens in basic FIFO');
+  action({quickRegister:'true'});
+  assert.equal(vm.runInContext('clinic.queues[2].values().at(-1).id',context),'P06');
+});
+
+test('Queue peek and isEmpty name their lane; the next served patient is shown separately',()=>{
+  const {element,action}=view();
+  action({room:'queue'});action({mode:'priority'});
+  action({action:'peek'});
+  assert.match(element('feedback').innerHTML,/peek\(\) jalur Darurat → P02/);
+  assert.match(element('controls').innerHTML,/Berikutnya dilayani: <strong>P04<\/strong>/);
+  assert.match(element('controls').innerHTML,/isEmpty\(\) Darurat/);
 });
