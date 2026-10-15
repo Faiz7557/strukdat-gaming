@@ -5,6 +5,7 @@ import vm from 'node:vm';
 import { Stack, Queue, Clinic, transfer, priorities } from '../model.js';
 import { lessons } from '../execution.js';
 import { warmupQuestions } from '../challenges.js';
+import { levels, complete, stars, buildRacks, buildClinic } from '../levels.js';
 
 // A small DOM sink tests event wiring and generated markup without a browser or network.
 function view({reducedMotion=true}={}) {
@@ -27,7 +28,7 @@ function view({reducedMotion=true}={}) {
     activeElement:element('body'),
     addEventListener:(type,handler)=>listeners.set(`document:${type}`,handler),
   };
-  const context = vm.createContext({ document, Stack, Queue, Clinic, transfer, priorities, lessons, warmupQuestions,
+  const context = vm.createContext({ document, Stack, Queue, Clinic, transfer, priorities, lessons, warmupQuestions, levels, complete, stars, buildRacks, buildClinic,
     matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),
     DOMPoint:class{constructor(x=0,y=0){this.x=x;this.y=y;}matrixTransform(){return this;}},
     getComputedStyle:()=>({transform:'none'}),
@@ -137,7 +138,7 @@ test('Queue branches, transfer phases, rejected operations, and reset have truth
 
 test('Predictions follow current top and next patient; wrong answers allow another attempt',()=>{
   const {element,context,click,action}=view();
-  click('start-mission');
+  action({level:'2'});click('start-mission');
   action({predict:'A'});
   assert.match(element('mission-predict').innerHTML,/Belum tepat/);
   assert.match(element('mission-predict').innerHTML,/data-predict="D"/);
@@ -165,7 +166,7 @@ test('Reset, mode switch, and mission replacement preserve work when cancelled',
   action({action:'pop'});
   click('reset');assert.equal(element('replace-confirm').open,true);
   decide('cancel');assert.equal(vm.runInContext('racks[0].peek().id',context),'C');
-  click('start-mission');decide('cancel');assert.equal(vm.runInContext('missions.stack.active',context),false);
+  action({level:'2'});click('start-mission');decide('cancel');assert.equal(vm.runInContext('missions.stack.active',context),false);
   click('reset');decide('replace');assert.equal(vm.runInContext('racks[0].peek().id',context),'D');
   action({room:'queue'});action({mode:'priority'});action({action:'call'});
   action({mode:'fifo'});decide('cancel');
@@ -178,7 +179,7 @@ test('Reset, mode switch, and mission replacement preserve work when cancelled',
 
 test('Stack mission hints follow blockers on Rak B and name unrecoverable missing items',()=>{
   const {context,element,click,action}=view();
-  click('start-mission');vm.runInContext('missions.stack.hintLevel=3',context);element('destination').value='1';action({action:'transfer'});
+  action({level:'2'});click('start-mission');vm.runInContext('missions.stack.hintLevel=3',context);element('destination').value='1';action({action:'transfer'});
   action({rack:'0'});element('destination').value='1';action({action:'transfer'});
   action({rack:'0'});action({action:'pop'});
   assert.match(element('mission-next').textContent,/C dari Rak B ke Rak A/);
@@ -186,14 +187,14 @@ test('Stack mission hints follow blockers on Rak B and name unrecoverable missin
   assert.match(element('mission-next').textContent,/D dari Rak B ke Rak A/);
   action({rack:'1'});element('destination').value='0';action({action:'transfer'});
   assert.equal(element('mission-status').textContent,'Selesai ✓');
-  assert.equal(vm.runInContext('completedMissions.has("stack")',context),true);
-  const other=view();other.click('start-mission');other.action({action:'pop'});
+  assert.equal(vm.runInContext('progress.stack[2].done',context),true);
+  const other=view();other.action({level:'2'});other.click('start-mission');other.action({action:'pop'});
   assert.match(other.element('mission-next').textContent,/D sudah keluar.*Ulangi misi/);
 });
 
 test('Hints reveal concept, then direction, then the exact step; recovery is always visible',()=>{
   const {context,element,click,action}=view();
-  click('start-mission');
+  action({level:'2'});click('start-mission');
   assert.equal(element('mission-next').textContent,'');
   action({hint:'true'});
   assert.match(element('mission-next').textContent,/Hanya barang top/);
@@ -202,7 +203,7 @@ test('Hints reveal concept, then direction, then the exact step; recovery is alw
   action({hint:'true'});
   assert.match(element('mission-next').textContent,/Pindahkan D dari Rak A ke Bantuan/);
   assert.equal(vm.runInContext('missions.stack.hintLevel',context),3);
-  const other=view();other.click('start-mission');other.action({action:'pop'});
+  const other=view();other.action({level:'2'});other.click('start-mission');other.action({action:'pop'});
   assert.match(other.element('mission-next').textContent,/D sudah keluar.*Ulangi misi/,'recovery without asking');
 });
 
@@ -218,7 +219,7 @@ test('Order text always names its reading direction and complexity notes stay ab
   const {element,click,action}=view();
   assert.doesNotMatch(element('structure-note').textContent,/Perekaman/);
   assert.match(element('structure-note').textContent,/push\/pop: O\(1\)/);
-  click('start-mission');element('destination').value='1';action({action:'transfer'});
+  action({level:'2'});click('start-mission');element('destination').value='1';action({action:'transfer'});
   action({rack:'0'});element('destination').value='1';action({action:'transfer'});
   action({rack:'0'});action({action:'pop'});
   action({rack:'1'});element('destination').value='0';action({action:'transfer'});
@@ -256,7 +257,7 @@ test('Each trace frame names the arena objects it points at',()=>{
 test('Colour carries meaning: neutral boxes, amber target, triage colours for priorities',()=>{
   const {element,action,click}=view();
   assert.doesNotMatch(element('scene').innerHTML,/#87bbdf|#a0d9e6/,'stack boxes must not use per-id hues');
-  click('start-mission');
+  action({level:'2'});click('start-mission');
   assert.match(element('scene').innerHTML,/#c98a1e/i,'mission target uses the goal palette');
   action({room:'queue'});action({mode:'priority'});
   const queue=element('scene').innerHTML;
@@ -301,4 +302,37 @@ test('Queue peek and isEmpty name their lane; the next served patient is shown s
   assert.match(element('feedback').innerHTML,/peek\(\) jalur Darurat → P02/);
   assert.match(element('controls').innerHTML,/Berikutnya dilayani: <strong>P04<\/strong>/);
   assert.match(element('controls').innerHTML,/isEmpty\(\) Darurat/);
+});
+
+test('Levels load from data, count moves, award stars, and ask an explain question',()=>{
+  const {context,element,click,action}=view();
+  action({level:'0'});click('start-mission');
+  for(let i=0;i<3;i++)action({quickPush:'true'});
+  assert.equal(vm.runInContext('racks[0].values().map(p=>p.id).join()',context),'C,B,A');
+  assert.equal(vm.runInContext('progress.stack[0].stars',context),3);
+  assert.match(element('level-summary').innerHTML,/Mengapa C menjadi top\?/);
+  action({explain:'1'});
+  assert.match(element('level-summary').innerHTML,/push membuat node baru/);
+});
+
+test('Loading a level over an edited experiment asks first',()=>{
+  const {context,element,click,action,decide}=view();
+  action({action:'pop'});
+  action({level:'3'});click('start-mission');
+  assert.equal(element('replace-confirm').open,true);
+  decide('cancel');
+  assert.equal(vm.runInContext('racks[0].peek().id',context),'C');
+});
+
+test('Plan mode queues actions, runs them in order, and stops when the room changes',()=>{
+  const {context,element,action,click}=view();
+  vm.runInContext('globalThis.__timers=[];setTimeout=(f)=>{__timers.push(f);return __timers.length;}',context);
+  action({level:'5'});click('start-mission');
+  action({rack:'0'});element('destination').value='2';action({action:'transfer'});
+  assert.equal(vm.runInContext('plan.length',context),1,'transfer is recorded, not executed');
+  assert.equal(vm.runInContext('racks[0].peek().id',context),'D');
+  action({runPlan:'true'});
+  action({room:'queue'});
+  vm.runInContext('__timers.splice(0).forEach(f=>f())',context);
+  assert.equal(vm.runInContext('racks[0].peek().id',context),'D','switching room cancels the pending plan');
 });

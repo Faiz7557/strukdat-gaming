@@ -9,6 +9,7 @@ const files = new Map([
   ['/model.js', ['model.js','text/javascript; charset=utf-8']],
   ['/execution.js', ['execution.js','text/javascript; charset=utf-8']],
   ['/challenges.js', ['challenges.js','text/javascript; charset=utf-8']],
+  ['/levels.js', ['levels.js','text/javascript; charset=utf-8']],
   ['/assets/Ubuntu-Regular.ttf', ['assets/Ubuntu-Regular.ttf','font/ttf']],
   ['/assets/Ubuntu-Medium.ttf', ['assets/Ubuntu-Medium.ttf','font/ttf']],
 ]);
