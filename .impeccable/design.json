@@ -185,6 +185,76 @@
           "oklch(83.57% 0.16072 271.30)",
           "oklch(95.00% 0.16072 271.30)"
         ]
+      },
+      "goal": {
+        "role": "tertiary",
+        "displayName": "Amber Target",
+        "tonalRamp": [
+          "oklch(15.00% 0.13225 67.14)",
+          "oklch(26.43% 0.13225 67.14)",
+          "oklch(37.86% 0.13225 67.14)",
+          "oklch(49.29% 0.13225 67.14)",
+          "oklch(60.71% 0.13225 67.14)",
+          "oklch(72.14% 0.13225 67.14)",
+          "oklch(83.57% 0.13225 67.14)",
+          "oklch(95.00% 0.13225 67.14)"
+        ]
+      },
+      "goal-ink": {
+        "role": "tertiary",
+        "displayName": "Amber Teks",
+        "tonalRamp": [
+          "oklch(15.00% 0.10493 71.95)",
+          "oklch(26.43% 0.10493 71.95)",
+          "oklch(37.86% 0.10493 71.95)",
+          "oklch(49.29% 0.10493 71.95)",
+          "oklch(60.71% 0.10493 71.95)",
+          "oklch(72.14% 0.10493 71.95)",
+          "oklch(83.57% 0.10493 71.95)",
+          "oklch(95.00% 0.10493 71.95)"
+        ]
+      },
+      "goal-pale": {
+        "role": "neutral",
+        "displayName": "Amber Pucat",
+        "tonalRamp": [
+          "oklch(15.00% 0.02490 81.13)",
+          "oklch(26.43% 0.02490 81.13)",
+          "oklch(37.86% 0.02490 81.13)",
+          "oklch(49.29% 0.02490 81.13)",
+          "oklch(60.71% 0.02490 81.13)",
+          "oklch(72.14% 0.02490 81.13)",
+          "oklch(83.57% 0.02490 81.13)",
+          "oklch(95.00% 0.02490 81.13)"
+        ]
+      },
+      "structure-line": {
+        "role": "secondary",
+        "displayName": "Garis Struktur",
+        "tonalRamp": [
+          "oklch(15.00% 0.08967 217.20)",
+          "oklch(26.43% 0.08967 217.20)",
+          "oklch(37.86% 0.08967 217.20)",
+          "oklch(49.29% 0.08967 217.20)",
+          "oklch(60.71% 0.08967 217.20)",
+          "oklch(72.14% 0.08967 217.20)",
+          "oklch(83.57% 0.08967 217.20)",
+          "oklch(95.00% 0.08967 217.20)"
+        ]
+      },
+      "select-line": {
+        "role": "tertiary",
+        "displayName": "Garis Pilihan",
+        "tonalRamp": [
+          "oklch(15.00% 0.11675 173.87)",
+          "oklch(26.43% 0.11675 173.87)",
+          "oklch(37.86% 0.11675 173.87)",
+          "oklch(49.29% 0.11675 173.87)",
+          "oklch(60.71% 0.11675 173.87)",
+          "oklch(72.14% 0.11675 173.87)",
+          "oklch(83.57% 0.11675 173.87)",
+          "oklch(95.00% 0.11675 173.87)"
+        ]
       }
     },
     "typographyMeta": {
@@ -207,6 +277,14 @@
       "code": {
         "displayName": "Jejak kode",
         "purpose": "Cuplikan Python bersumber dari praktikum dan rekaman node/referensi dari instruksi model JavaScript."
+      },
+      "section": {
+        "displayName": "Judul section",
+        "purpose": "Judul Bedah Eksekusi dan bagian utama (22px)."
+      },
+      "meta": {
+        "displayName": "Metadata",
+        "purpose": "Badge, petunjuk ringkas, dan label SVG; minimum 12px."
       }
     },
     "shadows": [

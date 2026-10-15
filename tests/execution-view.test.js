@@ -5,16 +5,20 @@ import vm from 'node:vm';
 import { Stack, Queue, Clinic, transfer, priorities } from '../model.js';
 import { lessons } from '../execution.js';
 import { warmupQuestions } from '../challenges.js';
+import { levels, complete, stars, buildRacks, buildClinic } from '../levels.js';
 
 // A small DOM sink tests event wiring and generated markup without a browser or network.
-function view() {
+function view({reducedMotion=true}={}) {
   const elements = new Map(), listeners = new Map();
   const element = id => {
     if (!elements.has(id)) elements.set(id, {
-      innerHTML:'', textContent:'', value:id==='destination'?'2':'', style:{}, dataset:{},
-      classList:{contains:()=>false,toggle(){}}, setAttribute(){}, hasAttribute:()=>false, focus(){}, closest:()=>null,
-      showModal(){this.open=true;},
-      getAnimations:()=>[], querySelector:()=>element('queried-child'),
+      innerHTML:'', textContent:'', value:id==='destination'?'2':'', style:{setProperty(){}}, dataset:{},
+      classList:{contains:()=>false,toggle(){},add(){},remove(){}}, setAttribute(){}, getAttribute:()=>null, hasAttribute:()=>false, focus(){}, closest:()=>null,
+      showModal(){this.open=true;}, append(){}, remove(){},
+      animate:()=>({finished:Promise.resolve(),cancel(){}}),
+      getScreenCTM:()=>({a:1,e:0,f:0,inverse(){return this;}}),
+      getBoundingClientRect:()=>({x:0,y:0,width:0,height:0,top:0,left:0,right:0,bottom:0}),
+      getAnimations:()=>[], querySelector:()=>element('queried-child'), querySelectorAll:()=>[],
       addEventListener:(type,handler)=>listeners.set(`${id}:${type}`,handler),
     });
     return elements.get(id);
@@ -24,8 +28,10 @@ function view() {
     activeElement:element('body'),
     addEventListener:(type,handler)=>listeners.set(`document:${type}`,handler),
   };
-  const context = vm.createContext({ document, Stack, Queue, Clinic, transfer, priorities, lessons, warmupQuestions,
-    matchMedia:()=>({matches:true}),getComputedStyle:()=>({transform:'none'}),
+  const context = vm.createContext({ document, Stack, Queue, Clinic, transfer, priorities, lessons, warmupQuestions, levels, complete, stars, buildRacks, buildClinic,
+    matchMedia:()=>({matches:reducedMotion,addEventListener(){}}),
+    DOMPoint:class{constructor(x=0,y=0){this.x=x;this.y=y;}matrixTransform(){return this;}},
+    getComputedStyle:()=>({transform:'none'}),
     setInterval:()=>1,clearInterval(){},setTimeout:()=>1,clearTimeout(){},
   });
   const app=readFileSync(new URL('../app.js',import.meta.url),'utf8').replace(/^import .*;\r?$/gm,'');
@@ -132,24 +138,24 @@ test('Queue branches, transfer phases, rejected operations, and reset have truth
 
 test('Predictions follow current top and next patient; wrong answers allow another attempt',()=>{
   const {element,context,click,action}=view();
-  click('start-mission');
+  action({level:'2'});click('start-mission');
   action({predict:'A'});
-  assert.match(element('controls').innerHTML,/Belum tepat/);
-  assert.match(element('controls').innerHTML,/data-predict="D"/);
+  assert.match(element('mission-predict').innerHTML,/Belum tepat/);
+  assert.match(element('mission-predict').innerHTML,/data-predict="D"/);
   action({predict:'D'});
-  assert.match(element('controls').innerHTML,/Benar. D berada pada top/);
+  assert.match(element('mission-predict').innerHTML,/Benar. D berada pada top/);
   action({action:'pop'});
-  assert.doesNotMatch(element('controls').innerHTML,/Benar. D berada pada top/);
+  assert.doesNotMatch(element('mission-predict').innerHTML,/Benar. D berada pada top/);
   action({predict:'D'});
-  assert.match(element('controls').innerHTML,/Belum tepat/);
+  assert.match(element('mission-predict').innerHTML,/Belum tepat/);
   action({predict:'C'});
-  assert.match(element('controls').innerHTML,/Benar. C berada pada top/);
-  vm.runInContext("room='queue';missions.queue={active:true};seedQueue(true);clinic.register({id:'P04',name:'Dina',priority:'kritis'});render();",context);
-  action({predict:'P04'});assert.match(element('controls').innerHTML,/Benar. P04 berada pada front/);
-  action({action:'call'});assert.doesNotMatch(element('controls').innerHTML,/data-predict=/);
+  assert.match(element('mission-predict').innerHTML,/Benar. C berada pada top/);
+  vm.runInContext("room='queue';queueMode='priority';missions.queue={active:true};seedQueue(true);clinic.register({id:'P04',name:'Dina',priority:'kritis'});render();",context);
+  action({predict:'P04'});assert.match(element('mission-predict').innerHTML,/Benar. P04 berada pada front/);
+  action({action:'call'});assert.doesNotMatch(element('mission-predict').innerHTML,/data-predict=/);
   action({action:'next-event'});
-  action({predict:'P04'});assert.match(element('controls').innerHTML,/Belum tepat/);
-  action({predict:'P02'});assert.match(element('controls').innerHTML,/Benar. P02 berada pada front/);
+  action({predict:'P04'});assert.match(element('mission-predict').innerHTML,/Belum tepat/);
+  action({predict:'P02'});assert.match(element('mission-predict').innerHTML,/Benar. P02 berada pada front/);
 });
 
 test('Reset, mode switch, and mission replacement preserve work when cancelled',()=>{
@@ -160,9 +166,9 @@ test('Reset, mode switch, and mission replacement preserve work when cancelled',
   action({action:'pop'});
   click('reset');assert.equal(element('replace-confirm').open,true);
   decide('cancel');assert.equal(vm.runInContext('racks[0].peek().id',context),'C');
-  click('start-mission');decide('cancel');assert.equal(vm.runInContext('missions.stack.active',context),false);
+  action({level:'2'});click('start-mission');decide('cancel');assert.equal(vm.runInContext('missions.stack.active',context),false);
   click('reset');decide('replace');assert.equal(vm.runInContext('racks[0].peek().id',context),'D');
-  action({room:'queue'});action({action:'call'});
+  action({room:'queue'});action({mode:'priority'});action({action:'call'});
   action({mode:'fifo'});decide('cancel');
   assert.equal(vm.runInContext('queueMode',context),'priority');
   assert.equal(vm.runInContext('clinic.active.patient.id',context),'P04');
@@ -173,7 +179,7 @@ test('Reset, mode switch, and mission replacement preserve work when cancelled',
 
 test('Stack mission hints follow blockers on Rak B and name unrecoverable missing items',()=>{
   const {context,element,click,action}=view();
-  click('start-mission');element('destination').value='1';action({action:'transfer'});
+  action({level:'2'});click('start-mission');vm.runInContext('missions.stack.hintLevel=3',context);element('destination').value='1';action({action:'transfer'});
   action({rack:'0'});element('destination').value='1';action({action:'transfer'});
   action({rack:'0'});action({action:'pop'});
   assert.match(element('mission-next').textContent,/C dari Rak B ke Rak A/);
@@ -181,7 +187,153 @@ test('Stack mission hints follow blockers on Rak B and name unrecoverable missin
   assert.match(element('mission-next').textContent,/D dari Rak B ke Rak A/);
   action({rack:'1'});element('destination').value='0';action({action:'transfer'});
   assert.equal(element('mission-status').textContent,'Selesai ✓');
-  assert.equal(vm.runInContext('completedMissions.has("stack")',context),true);
-  const other=view();other.click('start-mission');other.action({action:'pop'});
+  assert.equal(vm.runInContext('progress.stack[2].done',context),true);
+  const other=view();other.action({level:'2'});other.click('start-mission');other.action({action:'pop'});
   assert.match(other.element('mission-next').textContent,/D sudah keluar.*Ulangi misi/);
+});
+
+test('Hints reveal concept, then direction, then the exact step; recovery is always visible',()=>{
+  const {context,element,click,action}=view();
+  action({level:'2'});click('start-mission');
+  assert.equal(element('mission-next').textContent,'');
+  action({hint:'true'});
+  assert.match(element('mission-next').textContent,/Hanya barang top/);
+  action({hint:'true'});
+  assert.match(element('mission-next').textContent,/Ada 2 barang di atas B/);
+  action({hint:'true'});
+  assert.match(element('mission-next').textContent,/Pindahkan D dari Rak A ke Bantuan/);
+  assert.equal(vm.runInContext('missions.stack.hintLevel',context),3);
+  const other=view();other.action({level:'2'});other.click('start-mission');other.action({action:'pop'});
+  assert.match(other.element('mission-next').textContent,/D sudah keluar.*Ulangi misi/,'recovery without asking');
+});
+
+test('Keyboard users still see explanatory arena motion; only reduced motion disables it',()=>{
+  const moving=view({reducedMotion:false});
+  vm.runInContext('keyboardInput=true',moving.context);
+  assert.equal(vm.runInContext('motionAllowed()',moving.context),true);
+  const reduced=view({reducedMotion:true});
+  assert.equal(vm.runInContext('motionAllowed()',reduced.context),false);
+});
+
+test('Order text always names its reading direction and complexity notes stay about the operation',()=>{
+  const {element,click,action}=view();
+  assert.doesNotMatch(element('structure-note').textContent,/Perekaman/);
+  assert.match(element('structure-note').textContent,/push\/pop: O\(1\)/);
+  action({level:'2'});click('start-mission');element('destination').value='1';action({action:'transfer'});
+  action({rack:'0'});element('destination').value='1';action({action:'transfer'});
+  action({rack:'0'});action({action:'pop'});
+  action({rack:'1'});element('destination').value='0';action({action:'transfer'});
+  action({rack:'1'});element('destination').value='0';action({action:'transfer'});
+  assert.match(element('mission-description').textContent,/top → D → C → A/);
+  assert.doesNotMatch(element('mission-description').textContent,/A–C–D/);
+});
+
+test('Transfer explains peek, push, then pop and why the source changes last',()=>{
+  const {element,action}=view();
+  action({action:'transfer'});
+  assert.match(element('feedback').innerHTML,/peek sumber → push tujuan → pop sumber/);
+  assert.match(element('memory-context').textContent,/peek Rak A → D/);
+});
+
+test('World labels scale up to stay readable and phones start focused',()=>{
+  const {context}=view();
+  assert.equal(vm.runInContext('labelScale(1.3)',context),1);
+  assert.equal(vm.runInContext('labelScale(0.47)',context),2.2);
+  assert.equal(vm.runInContext('labelScale(0.8)',context),1.5);
+  assert.equal(vm.runInContext('defaultZoom()',context),1.4,'sink matchMedia matches → phone default');
+  assert.equal(vm.runInContext('camera.zoom',view({reducedMotion:false}).context),1,'desktop starts at 100%');
+});
+
+test('Each trace frame names the arena objects it points at',()=>{
+  const {context,element,listeners}=view();
+  element('item-id').value='G07';element('item-name').value='Modul';element('item-weight').value='3';element('item-category').value='Elektronik';
+  listeners.get('document:submit')({target:{id:'push-form'},preventDefault(){}});
+  const ids=vm.runInContext('trace.steps.map(i=>JSON.stringify(traceFocusIds(trace.records[i].frame)))',context).map(json=>JSON.parse(json));
+  assert.deepEqual(ids[0],['D'],'before node creation only top (D) is referenced');
+  assert.ok(ids[1].includes('G07'),'new_node is highlighted once created');
+  assert.deepEqual(ids.at(-1),['G07'],'top ends on the pushed item');
+});
+
+test('Colour carries meaning: neutral boxes, amber target, triage colours for priorities',()=>{
+  const {element,action,click}=view();
+  assert.doesNotMatch(element('scene').innerHTML,/#87bbdf|#a0d9e6/,'stack boxes must not use per-id hues');
+  action({level:'2'});click('start-mission');
+  assert.match(element('scene').innerHTML,/#c98a1e/i,'mission target uses the goal palette');
+  action({room:'queue'});action({mode:'priority'});
+  const queue=element('scene').innerHTML;
+  assert.match(queue,/#b24555/i,'kritis uses the danger colour');
+  assert.match(queue,/#b9730f/i,'darurat uses amber');
+  assert.match(queue,/data-priority="kritis"/,'priority has a non-colour marker');
+});
+
+test('Return values land in the result tray, including None and repeated operations',()=>{
+  const {element,action}=view();
+  action({action:'pop'});
+  assert.match(element('result-tray').innerHTML,/pop\(\) →<\/span> <strong>D<\/strong>/);
+  action({action:'pop'});
+  assert.match(element('result-tray').innerHTML,/<strong>C<\/strong>/,'second quick pop replaces the first');
+  action({action:'peek'});
+  assert.match(element('result-tray').innerHTML,/peek\(\)[\s\S]*<strong>B<\/strong>/);
+  action({action:'empty'});
+  assert.match(element('result-tray').innerHTML,/<strong>False<\/strong>/);
+  action({rack:'2'});action({action:'pop'});
+  assert.match(element('result-tray').innerHTML,/class="result-none"[\s\S]*None/);
+  action({room:'queue'});
+  assert.equal(element('result-tray').hidden,true,'tray clears when the room changes');
+  action({action:'call'});
+  assert.match(element('result-tray').innerHTML,/dequeue\(\)[\s\S]*<strong>P0\d<\/strong>/);
+});
+
+test('One-tap push and register use generated data and the same model path as the forms',()=>{
+  const {context,element,action}=view();
+  action({quickPush:'true'});
+  assert.equal(vm.runInContext('racks[0].peek().id',context),'G07');
+  assert.match(element('feedback').innerHTML,/push\(G07\) berhasil/);
+  action({room:'queue'});
+  assert.equal(vm.runInContext('queueMode',context),'fifo','Queue opens in basic FIFO');
+  action({quickRegister:'true'});
+  assert.equal(vm.runInContext('clinic.queues[2].values().at(-1).id',context),'P06');
+});
+
+test('Queue peek and isEmpty name their lane; the next served patient is shown separately',()=>{
+  const {element,action}=view();
+  action({room:'queue'});action({mode:'priority'});
+  action({action:'peek'});
+  assert.match(element('feedback').innerHTML,/peek\(\) jalur Darurat → P02/);
+  assert.match(element('controls').innerHTML,/Berikutnya dilayani: <strong>P04<\/strong>/);
+  assert.match(element('controls').innerHTML,/isEmpty\(\) Darurat/);
+});
+
+test('Levels load from data, count moves, award stars, and ask an explain question',()=>{
+  const {context,element,click,action}=view();
+  action({level:'0'});click('start-mission');
+  for(let i=0;i<3;i++)action({quickPush:'true'});
+  assert.equal(vm.runInContext('racks[0].values().map(p=>p.id).join()',context),'C,B,A');
+  assert.equal(vm.runInContext('progress.stack[0].stars',context),3);
+  assert.match(element('level-select').innerHTML,/data-level="0"[^>]*>1<span>★★★<\/span>/,'chip shows stars in the finishing render');
+  assert.match(element('level-summary').innerHTML,/Mengapa C menjadi top\?/);
+  action({explain:'1'});
+  assert.match(element('level-summary').innerHTML,/push membuat node baru/);
+});
+
+test('Loading a level over an edited experiment asks first',()=>{
+  const {context,element,click,action,decide}=view();
+  action({action:'pop'});
+  action({level:'3'});click('start-mission');
+  assert.equal(element('replace-confirm').open,true);
+  decide('cancel');
+  assert.equal(vm.runInContext('racks[0].peek().id',context),'C');
+});
+
+test('Plan mode queues actions, runs them in order, and stops when the room changes',()=>{
+  const {context,element,action,click}=view();
+  vm.runInContext('globalThis.__timers=[];setTimeout=(f)=>{__timers.push(f);return __timers.length;}',context);
+  action({level:'5'});click('start-mission');
+  action({rack:'0'});element('destination').value='2';action({action:'transfer'});
+  assert.equal(vm.runInContext('plan.length',context),1,'transfer is recorded, not executed');
+  assert.equal(vm.runInContext('racks[0].peek().id',context),'D');
+  action({runPlan:'true'});
+  action({room:'queue'});
+  vm.runInContext('__timers.splice(0).forEach(f=>f())',context);
+  assert.equal(vm.runInContext('racks[0].peek().id',context),'D','switching room cancels the pending plan');
 });

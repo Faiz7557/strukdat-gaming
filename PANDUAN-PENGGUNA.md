@@ -2,7 +2,7 @@
 
 Strukdat Gaming membantu kamu mempelajari **Stack** dan **Queue** dengan memindahkan barang, mengatur antrean pasien, lalu mengamati perubahan linked-list dan kode. Kamu bisa bereksperimen bebas atau mengikuti dua misi terpandu.
 
-Untuk pertama kali mencoba, ikuti urutan ini: **buka aplikasi → coba Tantangan pemula → selesaikan misi Stack → coba misi Queue → telusuri satu operasi di Bedah Eksekusi**.
+Untuk pertama kali mencoba, ikuti urutan ini: **buka aplikasi → coba Tantangan pemula → selesaikan level Stack secara berurutan → coba level Queue → telusuri satu operasi di Bedah Eksekusi**.
 
 ## 1. Membuka aplikasi
 
@@ -29,17 +29,37 @@ Tidak perlu menjalankan `npm install`. Buka aplikasi melalui alamat server terse
 |---|---|
 | **Stack / Queue** | Berpindah antara gudang barang dan antrean pasien. Di ponsel, tombolnya berada di navigasi bawah. |
 | **Tantangan pemula** | 10 soal per ruang untuk mengenali operasi dasar, kondisi kosong, dan urutan data sebelum mencoba arena. |
-| **Misi** | Menampilkan tujuan, progres, dan langkah berikutnya setelah misi dimulai. |
+| **Level dan misi** | Baris level 1–6 dengan bintang, tujuan, par langkah, petunjuk bertingkat, dan prediksi di atas arena. |
 | **Arena isometrik** | Memilih rak, barang, jalur, atau pasien. |
 | **Kontrol arena** | Menambah data, menjalankan operasi, dan mengatur simulasi. Di layar sempit, panel ini berada di bawah arena. |
-| **Operasi cepat** | Menjalankan tindakan dekat arena tanpa mencari tombol di panel lengkap. |
-| **Hasil operasi** | Menjelaskan tindakan yang berhasil atau alasan tindakan gagal. |
-| **Di balik simulasi** | Menampilkan urutan node dan referensi linked-list saat ini. |
+| **Dock aksi** | Tombol operasi di bawah arena. Stack: Simpan / push, Ambil / pop, Lihat / peek, isEmpty?, dan Pindahkan. Queue: Daftar / enqueue, Panggil / dequeue, Selesaikan, dan +1 menit. Push dan daftar cukup satu tap. |
+| **Baki hasil** | Menampilkan nilai kembali setiap operasi, termasuk `None`, selama beberapa saat. Teks feedback tetap menjelaskan tindakan yang berhasil atau alasan tindakan gagal. |
+| **Lensa** | Kolom kanan berisi struktur linked-list, kode, dan kontrol lanjutan. Di layar sempit, Lensa berada di bawah arena. |
 | **Bedah Eksekusi** | Menelusuri kode dan rekaman perubahan referensi dari operasi terakhir. |
 | **Catatan eksperimen** | Melihat riwayat operasi yang telah dilakukan. |
 | **Panduan** | Membuka bantuan ringkas di dalam aplikasi. |
 
 Pada ponsel, gunakan **Tambah data & kontrol lengkap** di bawah arena untuk menuju formulir dan pengaturan. Geser dari lantai arena untuk menggulir halaman; menyentuh dan menggeser barang teratas digunakan untuk drag.
+
+## Alur level dan bintang
+
+Setiap ruang memiliki **enam level** yang dibuka berurutan dari baris level di atas arena. Angka pada setiap level diikuti bintang yang sudah diperoleh.
+
+1. Pilih level, baca tujuan dan **par** (jumlah langkah yang disarankan), lalu klik **Mulai misi**.
+2. Gunakan **Petunjuk (1/3)** bila macet. Petunjuk berjalan tiga tingkat: konsep, arah, lalu langkah berikutnya. Memakai petunjuk tingkat 3 menurunkan bintang.
+3. Pada level 6 Stack dan level 6 Queue, susun langkah dari dock sebagai **rencana**, lalu klik **Jalankan rencana**. Langkah dijalankan satu per satu dengan jeda.
+4. Di strip misi, **prediksi** meminta kamu menebak keadaan saat ini sebelum menjalankan operasi. Jawaban salah dapat dicoba lagi.
+5. Setelah level selesai, ringkasan menampilkan bintang, jumlah langkah terhadap par, dan satu pertanyaan tentang alasan. Klik **Level berikutnya** untuk melanjutkan.
+
+Bintang dihitung sebagai berikut:
+
+| Bintang | Syarat |
+|---|---|
+| ★★★ | Selesai dalam par, tanpa petunjuk tingkat 3, dan tanpa prediksi salah. |
+| ★★☆ | Selesai dalam par, tetapi memakai petunjuk tingkat 3 atau ada prediksi salah. |
+| ★☆☆ | Selesai, tetapi jumlah langkah melebihi par. |
+
+Bintang dan progres level hanya tersimpan selama tab terbuka.
 
 ## Mulai dengan Tantangan pemula
 
@@ -74,7 +94,7 @@ Pilih **Rak A**, **Rak B**, atau **Bantuan** melalui arena atau tombol pada pane
 
 | Yang ingin dilakukan | Langkah |
 |---|---|
-| Menambah barang | Isi ID, berat, nama, dan kategori pada **Barang baru**, lalu klik **Simpan barang / push**. Barang masuk ke top. |
+| Menambah barang | Klik **Simpan / push** pada dock untuk satu tap. Untuk barang sendiri, isi ID, berat, nama, dan kategori pada **Barang baru** di Lensa, lalu klik **Simpan barang**. Barang masuk ke top. |
 | Mengambil barang | Klik **Ambil / pop**. Hanya barang di top yang keluar dari arena. |
 | Melihat barang teratas | Klik **Lihat / peek**. Data ditampilkan tanpa mengeluarkan barang. |
 | Memeriksa rak kosong | Klik **Periksa isEmpty()**. `True` berarti rak kosong; `False` berarti masih ada barang. |
@@ -93,7 +113,7 @@ Perhatikan juga aturan berikut:
 
 ### Contoh: menyelesaikan misi “ambil barang B”
 
-Klik **Mulai misi**. Jika muncul konfirmasi penggantian eksperimen, pilih **Ya, ganti skenario** untuk memuat susunan latihan.
+Pilih **level 3 · Ambil barang B** pada baris level, lalu klik **Mulai misi**. Jika muncul konfirmasi penggantian eksperimen, pilih **Ya, ganti skenario** untuk memuat susunan latihan.
 
 Misi dimulai dengan Rak A berisi **A, B, C, D dari bawah ke atas**. Rak B dan Bantuan kosong. Targetnya adalah mengambil B, lalu mengembalikan barang lainnya ke urutan semula.
 
@@ -120,7 +140,7 @@ Jika pertanyaan prediksi muncul, coba jawab sebelum menekan operasi. Jawaban sal
 
 Queue mengikuti **FIFO — First In, First Out**: data yang masuk lebih dahulu keluar lebih dahulu. Pasien masuk dari **rear** dan dipanggil dari **front**.
 
-Ada dua mode:
+Ada dua mode. Halaman dibuka di **FIFO dasar**:
 
 | Mode | Aturan pemanggilan |
 |---|---|
@@ -132,7 +152,7 @@ Pada mode tiga prioritas, memilih jalur atau pasien hanya menentukan data yang s
 ### Registrasi dan pelayanan
 
 1. Pilih mode antrean yang ingin dipelajari.
-2. Isi **ID pasien**, **Nama pasien**, dan **Tingkat kegawatan**, lalu klik **Daftarkan / enqueue**. Pada mode FIFO dasar, pilihan kegawatan dinonaktifkan.
+2. Klik **Daftar / enqueue** pada dock untuk satu tap. Untuk data sendiri, isi **ID pasien**, **Nama pasien**, dan **Tingkat kegawatan** di Lensa, lalu klik **Daftarkan / enqueue**. Pada mode FIFO dasar, pilihan kegawatan dinonaktifkan.
 3. Klik **Panggil berikutnya / dequeue** saat loket tersedia.
 4. Pasien mulai dilayani selama **lima menit simulasi**. Tombol pemanggilan tidak tersedia selama pelayanan berlangsung.
 5. Klik **1 menit** untuk memajukan jam satu menit, atau **Kejadian berikut** untuk langsung menyelesaikan pelayanan aktif. Tombol cepat **Selesaikan** di dekat arena melakukan tindakan yang sama.
@@ -150,7 +170,7 @@ Pada mode tiga prioritas, memilih jalur atau pasien hanya menentukan data yang s
 
 ### Contoh: menyelesaikan misi “prioritas tetap tertib”
 
-1. Buka ruang **Queue**, lalu klik **Mulai misi**. Konfirmasikan jika diminta. Misi memuat P01 non-darurat serta P02 dan P03 darurat; P02 datang sebelum P03.
+1. Buka ruang **Queue**, pilih **level 5 · Prioritas tetap tertib**, lalu klik **Mulai misi**. Konfirmasikan jika diminta. Misi memuat P01 non-darurat serta P02 dan P03 darurat; P02 datang sebelum P03.
 2. Pada registrasi, gunakan **ID P04**, nama **Dina**, dan tingkat **Kritis**, lalu klik **Daftarkan / enqueue**.
 3. Klik **Panggil berikutnya / dequeue**. P04 dipanggil lebih dahulu karena berada di jalur kritis.
 4. Klik **Kejadian berikut** untuk menyelesaikan pelayanan P04. Jam berubah dari 08.00 menjadi 08.05.
@@ -199,7 +219,7 @@ Hal yang perlu dibedakan:
 | **Fokus objek** | Pilih rak atau pasien, lalu aktifkan tombol fokus untuk mendekatkan kamera ke pilihan. |
 | **Kembalikan kamera** | Mengembalikan sudut pandang dan zoom awal tanpa mengubah data. |
 | **Kecepatan** | Pilih 0.65×, 1×, atau 1.5× untuk mengatur kecepatan animasi dan pemutaran rekaman. |
-| **Gerakan minimal** | Centang untuk mengurangi gerakan. Preferensi pengurangan gerak perangkat juga dihormati. |
+| **Gerakan minimal** | Centang untuk mengurangi gerakan: objek yang berubah diberi outline statis tanpa berpindah. Preferensi pengurangan gerak perangkat juga dihormati. Mode keyboard tetap menjalankan animasi arena. |
 | **Tab / Shift+Tab** | Berpindah antar kontrol. |
 | **Enter / Spasi** | Mengaktifkan tombol atau memilih objek arena yang sedang mendapat fokus. |
 | **Escape** | Membatalkan drag atau menutup dialog. Pada konfirmasi penggantian skenario, Escape mempertahankan eksperimen. |
@@ -212,7 +232,7 @@ Hal yang perlu dibedakan:
 - Jika eksperimen atau isian sudah berubah, aplikasi meminta konfirmasi. Pilih **Kembali ke eksperimen** untuk membatalkan atau **Ya, ganti skenario** untuk melanjutkan.
 - **Bersihkan catatan** hanya menghapus riwayat operasi, tanpa mengosongkan rak atau antrean.
 
-**Data hanya tersimpan selama tab digunakan. Memuat ulang atau menutup halaman akan menghilangkan eksperimen.** Simpan screenshot atau salin catatan penting sebelum keluar jika kamu membutuhkan bukti praktikum.
+**Data dan progres level hanya tersimpan selama tab digunakan. Memuat ulang atau menutup halaman akan menghilangkan eksperimen dan bintang.** Simpan screenshot atau salin catatan penting sebelum keluar jika kamu membutuhkan bukti praktikum.
 
 ## 8. Jika menemui kendala
 

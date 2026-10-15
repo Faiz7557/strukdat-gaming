@@ -19,11 +19,13 @@ Buka http://127.0.0.1:5174. Server memakai Node.js standar dan hanya menyediakan
 - Tantangan pemula: 20 soal (10 Stack dan 10 Queue) tentang tambah/ambil/peek, isEmpty, kondisi kosong, underflow, perubahan referensi, serta urutan beberapa operasi. Umpan balik dan diagram langsung, retry tanpa penalti, dan progres per ruang selama tab terbuka.
 
 - Gudang: tiga Stack linked-list, push, pop, peek, isEmpty, pencarian ID, batas jumlah/berat, dan perpindahan barang yang memvalidasi tujuan sebelum mengubah sumber.
-- Misi Stack: ambil B, simpan D dan C pada Stack bantuan, pulihkan A–C–D.
-- Queue: FIFO dasar atau tiga jalur prioritas. Satu loket, lima menit per pasien, pelayanan tidak diinterupsi. Pemanggilan dilakukan manual setelah loket tersedia.
+- Stack: enam level per ruang (tumpuk tiga, kosongkan rak, ambil barang B, balik urutan, batas kapasitas, rencana dulu). Setiap level memberi 1–3 bintang terhadap par langkah.
+- Baki hasil menampilkan nilai kembali dari pop, dequeue, peek, dan isEmpty, termasuk `None`.
+- Lensa memuat struktur, kode, dan kontrol lanjutan. Push dan daftar dilakukan dengan satu tap dari dock aksi.
+- Queue: mulai di FIFO dasar; tiga jalur prioritas tersedia sebagai mode lanjutan. Enam level per ruang (antre tiga, kosongkan antrean, batal di tengah, jam loket, prioritas tetap tertib, rencana pelayanan). Satu loket, lima menit per pasien, pelayanan tidak diinterupsi. Pemanggilan dilakukan manual setelah loket tersedia.
 - Pembatalan pasien menunggu menggunakan pencarian dan penyambungan ulang linked-list, termasuk perubahan front/rear.
 - Jam simulasi, estimasi tunggu berdasarkan antrean saat ini, laporan dilayani/dibatalkan/menunggu, dan pasien dalam pelayanan ditampilkan terpisah.
-- Misi Queue: daftarkan P04 kritis, selesaikan P04, panggil P02 sebelum P03, batalkan P01.
+- Mode rencana pada level 6 di tiap ruang: susun langkah di dock, lalu jalankan sekali.
 - Bedah Eksekusi: cuplikan push/pop/enqueue/dequeue dari dokumen praktikum, baris aktif yang bisa dipilih, cabang yang dilewati, serta kontrol langkah/putar/jeda. Node, referensi, variabel lokal, dan hasil direkam langsung saat instruksi model JavaScript berjalan. Arena tetap menampilkan hasil akhir; penelusuran rekaman tidak mengubah data.
 - Sumber dokumen/bagian, hubungan kotak/pasien dengan Node.data, kode awal Node/Stack/Queue, dan implementasi JavaScript aktual tersedia pada panel pembelajaran. Aturan kapasitas, prioritas, dan pelayanan dibedakan dari algoritma dasar.
 - Transfer memperlihatkan dua fase: push ke tujuan setelah validasi, lalu pop dari sumber. Identitas N1/N2 lokal pada setiap rekaman; node yang tidak lagi dicapai tetap ditampilkan untuk penjelasan, tanpa mengklaim perilaku garbage collector.
@@ -47,7 +49,7 @@ Tes browser tersimpan di `tests/browser.cjs`. Dengan server aktif dan Playwright
 
 ## Batas versi ini
 
-Data hanya berada di memori tab dan kembali ke contoh ketika halaman dimuat ulang. Mode dan misi baru mengganti skenario ruang tersebut. Python ditampilkan untuk pembelajaran, bukan interpreter kode pengguna. Rekaman instruksi tersedia untuk empat operasi dasar; peek/isEmpty dan pembatalan masih berupa penjelasan algoritma yang diberi label berbeda. Cuplikan dokumen menghilangkan baris kosong; nomor baris relatif terhadap cuplikan, bukan nomor halaman dokumen. Operasi pointer inti O(1), sedangkan pencatatan seluruh node menambah O(n) per langkah untuk pembelajaran. JS juga mengembalikan data dari push/enqueue sebagai kemudahan aplikasi, berbeda dari return implisit None pada Python; tes kesetaraan memeriksa isi struktur dan hasil pop/dequeue. Jam dimajukan manual; kedatangan pasien melalui registrasi. Dunia isometrik menampilkan enam kotak teratas per rak dan lima pasien depan per jalur, dengan indikator jumlah yang tersisa; diagram node dan panel kontrol tetap mencakup seluruh data. Antrean klinik merupakan penyederhanaan tugas praktikum, bukan model pengambilan keputusan medis.
+Data dan progres level beserta bintang hanya berada di memori tab, dan kembali ke awal ketika halaman dimuat ulang. Mode dan level baru mengganti skenario ruang tersebut. Python ditampilkan untuk pembelajaran, bukan interpreter kode pengguna. Rekaman instruksi tersedia untuk empat operasi dasar; peek/isEmpty dan pembatalan masih berupa penjelasan algoritma yang diberi label berbeda. Cuplikan dokumen menghilangkan baris kosong; nomor baris relatif terhadap cuplikan, bukan nomor halaman dokumen. Operasi pointer inti O(1), sedangkan pencatatan seluruh node menambah O(n) per langkah untuk pembelajaran. JS juga mengembalikan data dari push/enqueue sebagai kemudahan aplikasi, berbeda dari return implisit None pada Python; tes kesetaraan memeriksa isi struktur dan hasil pop/dequeue. Jam dimajukan manual; kedatangan pasien melalui registrasi. Dunia isometrik menampilkan enam kotak teratas per rak dan lima pasien depan per jalur, dengan indikator jumlah yang tersisa; diagram node dan panel kontrol tetap mencakup seluruh data. Antrean klinik merupakan penyederhanaan tugas praktikum, bukan model pengambilan keputusan medis.
 
 ## Desain
 
@@ -55,6 +57,6 @@ Dasar putih–silver (#FFFFFF / #F4F5F9), indigo #2F39A9, biru #2E6FA0, cyan #49
 
 ## Audit dan kurasi UI/UX
 
-Tujuan misi tampil sebelum arena; hasil operasi dan tautan rekaman berada setelah tombol aksi. Ponsel memakai navigasi bawah dan prinsip LIFO/FIFO tetap terlihat. Teks edukasi 14px, metadata minimum 12px, serta tombol utama dan kamera minimum 44px. Penggantian skenario meminta konfirmasi jika eksperimen atau isian sudah berubah.
+Tujuan misi tampil sebelum arena; hasil operasi dan tautan rekaman berada setelah tombol aksi. Ponsel memakai navigasi bawah dan prinsip LIFO/FIFO tetap terlihat. Teks utama 15px, metadata minimum 12px, serta tombol utama dan kamera minimum 44px. Penggantian skenario meminta konfirmasi jika eksperimen atau isian sudah berubah.
 
 Tes tambahan `node tests/browser-audit.cjs` memakai Playwright yang sudah terpasang, variabel `PLAYWRIGHT_MODULE` dan `BROWSER_EXECUTABLE` yang sama dengan tes browser utama. Tes ini melayani berkas melalui routing browser sehingga tidak memerlukan server atau koneksi jaringan. Cakupan: dua ruang pada lima lebar layar (320, 390, 768, 1024, 1440px), kedua misi, prediksi dinamis, dialog konfirmasi/Escape, draft per rak, fokus SVG, reduced motion, serta gulir dan drag sentuh sintetis. Bukti berada di `screenshots/audit/`; laporan lengkap di `AUDIT-UIUX.md`.

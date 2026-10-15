@@ -29,14 +29,16 @@ const root = path.resolve(__dirname,'..');
     for(const width of [320,390,768,1024,1440]){
       await page.setViewportSize({width,height:1000});
       for(const room of ['stack','queue']){
-        await page.locator(`.rail [data-room="${room}"]`).click();
+        await page.locator(`[data-room="${room}"]:visible`).first().click();
         const layout=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,
           principle:getComputedStyle(document.querySelector('#principle')).display,
           text:getComputedStyle(document.querySelector('#room-description')).fontSize,
           missionBeforeArena:document.querySelector('.mission').getBoundingClientRect().top<document.querySelector('#scene').getBoundingClientRect().top,
           camera:[...document.querySelectorAll('.camera-controls button')].map(el=>({w:el.getBoundingClientRect().width,h:el.getBoundingClientRect().height}))}));
         assert.ok(layout.scroll<=width,`${room} overflows at ${width}: ${layout.scroll}`);
-        assert.notEqual(layout.principle,'none');assert.ok(layout.missionBeforeArena);
+        const smallest=await page.evaluate(()=>Math.min(...[...document.querySelectorAll('#scene text')].filter(t=>t.getBoundingClientRect().height>0).map(t=>parseFloat(getComputedStyle(t).fontSize)*t.getScreenCTM().a)));
+        assert.ok(smallest>=11.5,`${room} ${width}: smallest SVG text ${smallest.toFixed(1)}px`);
+        assert.notEqual(layout.principle,'none');
         assert.ok(parseFloat(layout.text)>=14);
         assert.ok(layout.camera.every(box=>box.w>=44&&box.h>=44));
         results.push({room,...layout});
@@ -46,9 +48,23 @@ const root = path.resolve(__dirname,'..');
         }
       }
     }
+    for(const [width,height] of [[1440,900],[1280,800],[390,844]]){
+      await page.setViewportSize({width,height});
+      for(const room of ['stack','queue']){
+        await page.locator(`[data-room="${room}"]:visible`).first().click();
+        await page.evaluate(()=>scrollTo(0,0));
+        const box=await page.evaluate(()=>{const r=s=>document.querySelector(s).getBoundingClientRect();
+          return {scene:r('#scene'),dock:r('#quick-actions'),feedback:r('#feedback'),nodes:r('#nodes'),code:r('#code'),vh:innerHeight};});
+        if(width>=1280){
+          assert.ok(box.scene.top+box.scene.height*.8<=box.vh,`${room} ${width}: arena below fold`);
+          for(const key of ['dock','feedback','nodes','code'])assert.ok(box[key].top<box.vh,`${room} ${width}: ${key} below fold (${box[key].top})`);
+        } else assert.ok(box.scene.top<=320,`${room} ${width}: arena starts at ${box.scene.top}`);
+        results.push({room,width,height,scene:Math.round(box.scene.top),dock:Math.round(box.dock.top),code:Math.round(box.code.top)});
+      }
+    }
 
     for(const room of ['stack','queue']){
-      await page.locator(`.rail [data-room="${room}"]`).click();
+      await page.locator(`[data-room="${room}"]:visible`).first().click();
       const arena=await page.locator('#scene').innerHTML(),mission=await page.locator('#mission-status').innerText();
       assert.equal(await page.locator('#warmup-body').isVisible(),false);
       await page.locator('#toggle-warmup').click();
@@ -109,8 +125,10 @@ const root = path.resolve(__dirname,'..');
       await page.locator('#toggle-warmup').click();
     }
     await page.setViewportSize({width:1440,height:1000});
-    await page.locator('.rail [data-room="stack"]').click();
+    await page.locator('[data-room="stack"]:visible').first().click();
+    await page.locator('[data-level="2"]').click();
     await page.locator('#start-mission').click();
+    for(let i=0;i<3;i++)await page.locator('#mission-hint').click();
     await page.locator('#controls [data-predict="A"]').click();
     assert.match(await page.locator('.prediction').innerText(),/Belum tepat/);
     await page.locator('#controls [data-predict="D"]').click();
@@ -163,7 +181,8 @@ const root = path.resolve(__dirname,'..');
     assert.equal(await page.locator('#max-items').inputValue(),'10');
     assert.equal(await page.locator('#destination').inputValue(),'1');
 
-    await page.locator('.rail [data-room="queue"]').click();
+    await page.locator('[data-room="queue"]:visible').first().click();
+    await page.locator('[data-level="4"]').click();
     await page.locator('#start-mission').click();
     await page.locator('#register-form button').click();
     await page.locator('#controls [data-action="call"]').click();
