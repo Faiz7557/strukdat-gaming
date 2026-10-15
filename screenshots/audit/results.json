@@ -1,0 +1,275 @@
+{
+  "viewports": [
+    {
+      "room": "stack",
+      "width": 320,
+      "scroll": 320,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "room": "queue",
+      "width": 320,
+      "scroll": 320,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "room": "stack",
+      "width": 390,
+      "scroll": 390,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "room": "queue",
+      "width": 390,
+      "scroll": 390,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "room": "stack",
+      "width": 768,
+      "scroll": 768,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "room": "queue",
+      "width": 768,
+      "scroll": 768,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "room": "stack",
+      "width": 1024,
+      "scroll": 1024,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "room": "queue",
+      "width": 1024,
+      "scroll": 1024,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "room": "stack",
+      "width": 1440,
+      "scroll": 1440,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    },
+    {
+      "room": "queue",
+      "width": 1440,
+      "scroll": 1440,
+      "principle": "flex",
+      "text": "14px",
+      "missionBeforeArena": true,
+      "camera": [
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        },
+        {
+          "w": 44,
+          "h": 44
+        }
+      ]
+    }
+  ],
+  "checks": [
+    "responsive",
+    "missions-stack-and-queue",
+    "stateful-prediction",
+    "replacement-cancel-confirm-escape",
+    "draft-persistence",
+    "svg-keyboard-focus",
+    "reduced-motion",
+    "synthesized-touch-scroll-and-drag"
+  ],
+  "errors": []
+}

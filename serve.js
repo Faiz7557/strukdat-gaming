@@ -7,6 +7,7 @@ const files = new Map([
   ['/styles.css', ['styles.css','text/css; charset=utf-8']],
   ['/app.js', ['app.js','text/javascript; charset=utf-8']],
   ['/model.js', ['model.js','text/javascript; charset=utf-8']],
+  ['/execution.js', ['execution.js','text/javascript; charset=utf-8']],
   ['/assets/Ubuntu-Regular.ttf', ['assets/Ubuntu-Regular.ttf','font/ttf']],
   ['/assets/Ubuntu-Medium.ttf', ['assets/Ubuntu-Medium.ttf','font/ttf']],
 ]);

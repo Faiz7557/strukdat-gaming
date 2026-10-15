@@ -1,4 +1,5 @@
 import { Stack, Clinic, transfer, priorities } from './model.js';
+import { lessons } from './execution.js';
 
 const $ = id => document.getElementById(id);
 const escape = value => String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -13,14 +14,27 @@ let drawnRoom = null;
 const rackPositions = [[278,335],[470,431],[684,333]];
 const completedMissions = new Set();
 const drafts = {stack:{},queue:{}};
+let capacityDrafts = [{},{},{}];
 const camera = {zoom:1,focus:false};
 let motionSpeed = 1, keyboardInput = false, drag = null, suppressClick = false, achievementTimer = null;
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
-const motionAllowed = () => !keyboardInput && !document.body.classList.contains('reduced-motion') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+const motionPreference = matchMedia('(prefers-reduced-motion: reduce)');
+const motionAllowed = () => !keyboardInput && !document.body.classList.contains('reduced-motion') && !motionPreference.matches;
 let feedback = { text:'Pilih rak, lalu coba push atau pop. Amati perubahan top pada linked-list.', error:false };
+const edited = {stack:false,queue:false};
+let pendingReplacement = null;
+
+function replaceExperiment(description, action) {
+  if (!edited[room]) { action(); return; }
+  pendingReplacement = action;
+  $('replace-description').textContent = description;
+  $('replace-confirm').returnValue = '';
+  $('replace-confirm').showModal();
+}
 
 function item(id, name, weight, category = 'Elektronik') { return { id, name, weight, category }; }
 function seedStack(mission = false) {
+  capacityDrafts = [{},{},{}];
   racks = [new Stack(), new Stack(), new Stack(6, 30)];
   [item('A','Modul daya',4),item('B','Sensor suhu',3),item('C','Panel kontrol',5),item('D','Kabel jaringan',2)].forEach(p => racks[0].push(p));
   if (!mission) [item('E','Buku panduan',2,'Dokumen'),item('F','Alat ukur',4,'Peralatan')].forEach(p => racks[1].push(p));
@@ -38,50 +52,74 @@ function stopTrace() { clearInterval(traceTimer); traceTimer = null; $('trace-pl
 function setTrace(lines, notes, snapshots = [], skipped = []) {
   stopTrace(); trace = {lines,notes,snapshots,steps:lines.map((_,i)=>i).filter(i=>!skipped.includes(i))}; traceIndex = trace.steps[0]; renderTrace();
 }
-function tracePush(before, data) {
-  setTrace(['def push(self, data):','    new_node = Node(data)','    new_node.next = self.top','    self.top = new_node'],
-    ['Push menerima data baru.','Node baru dibuat; next masih None.','Node baru terhubung ke top lama.','Top berpindah ke node baru.'],
-    [`top → ${before}`,`top → ${before}\nnew_node → ${data.id}; next → None`,`top → ${before}\nnew_node → ${data.id}; next → ${before}`,`top → ${data.id} → ${before}`]);
+function traceExecution(entries) {
+  stopTrace();
+  trace = { lines:[], notes:[], snapshots:[], steps:[], records:[], lineNumbers:[] };
+  for (const { execution, context } of entries) {
+    const lesson = lessons[execution.operation], offset = trace.lines.length;
+    trace.lines.push(...lesson.lines);
+    lesson.lines.forEach((_,i)=>trace.lineNumbers.push(i+1));
+    execution.frames.forEach((frame,i)=>{
+      const index = offset + frame.line;
+      trace.steps.push(index); trace.notes[index] = frame.note;
+      trace.records[index] = { frame, previous:execution.frames[i-1], lesson, execution, context };
+    });
+  }
+  traceIndex = trace.steps[0]; renderTrace();
 }
-function tracePop(before, next, empty = false) {
-  setTrace(empty ? ['def pop(self):','    if self.top is None:','        return None'] : ['def pop(self):','    if self.top is None:','        return None','    data = self.top.data','    self.top = self.top.next','    return data'],
-    empty ? ['Periksa Stack sebelum mengambil data.','Top bernilai None: Stack kosong.','Kembalikan None; Stack tetap kosong.'] : ['Pop mengambil elemen teratas.','Top tersedia; cabang return None dilewati.','Baris ini dilewati karena Stack berisi data.','Simpan data top sebelum mengubah referensi.','Top berpindah ke node berikutnya.','Kembalikan data yang sudah diambil.'],
-    empty ? ['top → None','top → None','hasil → None'] : [`top → ${before}`,`top → ${before}`,`top → ${before}`,`data → ${before}; top → ${before}`,`data → ${before}; top → ${next}`,`hasil → ${before}; top → ${next}`],empty?[]:[2]);
-}
-function traceEnqueue(patient, oldRear, oldFront) {
-  const empty = oldRear === 'None';
-  setTrace(empty ? ['def enqueue(self, data):','    new_node = Node(data)','    if self.rear is None:','        self.front = new_node','        self.rear = new_node'] : ['def enqueue(self, data):','    new_node = Node(data)','    if self.rear is None:','        # cabang kosong dilewati','    else:','        self.rear.next = new_node','        self.rear = new_node'],
-    empty ? ['Tambahkan pasien ke Queue.','Buat node pasien.','Queue kosong; front dan rear harus diisi.','Front menunjuk pasien pertama.','Rear menunjuk node yang sama.'] : ['Tambahkan pasien ke belakang Queue.','Buat node pasien.','Rear tersedia; gunakan cabang else.','Front tetap menunjuk pasien pertama.','Masuk ke cabang Queue berisi data.','Hubungkan rear lama ke node baru.','Pindahkan rear ke node baru.'],
-    empty ? ['front → None; rear → None',`node → ${patient.id}; next → None`,'front → None; rear → None',`front → ${patient.id}; rear → None`,`front → ${patient.id}; rear → ${patient.id}`] : [`front → ${oldFront}; rear → ${oldRear}`,`node → ${patient.id}; next → None`,`rear → ${oldRear}`,`front → ${oldFront}`,`rear → ${oldRear}`,`${oldRear}.next → ${patient.id}`,`front → ${oldFront}; rear → ${patient.id}`],empty?[]:[3]);
-}
-function traceDequeue(patient, next, rear) {
-  if (!patient) return setTrace(['def dequeue(self):','    if self.front is None:','        return None'],['Periksa Queue.','Front bernilai None.','Kembalikan None tanpa mengubah Queue.'],['front → None; rear → None','front → None','hasil → None']);
-  const emptied = next === 'None';
-  setTrace(['def dequeue(self):','    if self.front is None:','        return None','    data = self.front.data','    self.front = self.front.next','    if self.front is None:',...(emptied?['        self.rear = None']:['        # Queue masih berisi data']),'    return data'],
-    ['Ambil pasien dari depan jalur terpilih.','Front tersedia.','Cabang ini dilewati.','Simpan data pasien.','Pindahkan front ke node berikutnya.',emptied?'Queue sekarang kosong.':'Queue masih berisi data.',emptied?'Kosongkan rear juga.':'Rear tetap menunjuk pasien terakhir.','Kembalikan data pasien.'],
-    [`front → ${patient.id}; rear → ${rear}`,`front → ${patient.id}`,`front → ${patient.id}`,`data → ${patient.id}`,`front → ${next}; rear → ${rear}`,`front → ${next}`,`front → ${next}; rear → ${emptied?'None':rear}`,`hasil → ${patient.id}`],emptied?[2]:[2,6]);
+function renderExecution() {
+  const record = trace?.records?.[traceIndex];
+  $('foundation-source').textContent = `class Node: PRAKTIKUM 7 Queue.docx › Membuat struktur node. class ${room==='stack'?'Stack: PRAKTIKUM 6 Stack.docx › Membuat struktur stack':'Queue: PRAKTIKUM 7 Queue.docx › Membuat Struktur Queue'}. Baris kosong dihilangkan.`;
+  $('foundation-code').textContent = `class Node:\n    def __init__(self, data):\n        self.data = data\n        self.next = None\n\nclass ${room==='stack'?'Stack':'Queue'}:\n    def __init__(self):\n${room==='stack'?'        self.top = None':'        self.front = None\n        self.rear = None'}`;
+  $('implementation-details').hidden = !record;
+  $('execution-kind').textContent = record ? 'Rekaman model' : trace ? 'Penjelasan algoritma' : 'Pilih operasi';
+  $('code-source').textContent = record ? `${record.lesson.document} › Percobaan Praktikum › ${record.lesson.section}. Nomor baris relatif cuplikan; baris kosong dihilangkan.` : trace ? 'Padanan Python untuk penjelasan. Operasi ini belum memiliki rekaman node per instruksi.' : 'Jalankan push, pop, registrasi (enqueue), atau panggil (dequeue) untuk membuka cuplikan praktikum.';
+  $('memory-context').textContent = record?.context ?? 'Rekaman operasi';
+  $('code-meaning').textContent = record ? record.lesson.meaning : 'Kotak atau pasien = Node.data. Panah next = referensi ke node berikutnya. Satu rak atau jalur antrean = satu objek Stack atau Queue.';
+  $('code-extension').textContent = record ? record.lesson.extension : 'Bedah Eksekusi merekam push, pop, enqueue, dan dequeue. Kapasitas, pencarian, pembatalan, dan waktu adalah pengembangan tugas; penjelasannya dibedakan dari rekaman instruksi.';
+  if (!record) {
+    $('memory-state').innerHTML = '<div class="memory-empty"><span>JALANKAN OPERASI</span><strong>Objek bergerak karena referensi berubah.</strong><p>Coba push satu barang, lalu telusuri barisnya. Amati node baru dibuat, next disambungkan, dan top berpindah. Rekaman akan tetap tersedia saat kamu memilih objek lain.</p></div>';
+    return;
+  }
+  const { frame, previous } = record;
+  $('implementation').textContent = record.execution.implementation;
+  const target = id => id ? `${id} · ${frame.nodes.find(n=>n.id===id)?.data ?? '?'}` : 'None';
+  const refs = Object.entries(frame.refs).map(([name,id])=>{
+    const old = previous?.refs[name], changed = previous && old !== id;
+    return `<tr class="${changed?'reference-changed':''}"><th scope="row">${escape(name)}</th><td>${escape(target(id))}${changed?`<small>${old === undefined?'baru':`${escape(target(old))} → ${escape(target(id))}`}</small>`:''}</td></tr>`;
+  }).join('');
+  const reachable = new Set();
+  for (let id = frame.refs.top ?? frame.refs.front; id && !reachable.has(id); id = frame.nodes.find(n=>n.id===id)?.next) reachable.add(id);
+  const nodes = frame.nodes.map(node=>{
+    const old = previous?.nodes.find(n=>n.id===node.id), changed = previous && (!old || old.next!==node.next);
+    const pointers = Object.entries(frame.refs).filter(([,id])=>id===node.id).map(([name])=>name).join(' + ');
+    return `<li class="memory-node ${changed?'memory-changed':''} ${reachable.has(node.id)?'':'memory-detached'}" data-memory-node="${node.id}" data-memory-data="${escape(node.data)}"><span class="memory-pointers">${escape(pointers||'Tidak dicapai dari top/front')}</span><strong>${escape(node.id)} <span>${escape(node.data)}</span></strong><code>next → ${escape(target(node.next))}</code></li>`;
+  }).join('');
+  $('memory-state').innerHTML = `<table class="reference-table"><caption>Referensi setelah baris ${frame.line+1}</caption><tbody>${refs}</tbody></table><div class="memory-locals"><span>Variabel lokal</span>${Object.entries(frame.values).map(([name,value])=>`<code>${escape(name)} = ${escape(value)}</code>`).join('')||'<code>Belum ada</code>'}</div><ul class="memory-nodes" aria-label="Node yang teramati dalam operasi">${nodes||'<li class="memory-null">Tidak ada node · None</li>'}</ul>`;
 }
 function renderTrace() {
   if (!trace) {
     $('code').innerHTML = '<div class="code-empty"># Coba operasi pada meja operator.\n# Setiap perubahan punya cerita.</div>';
     $('trace-position').textContent = 'Belum ada operasi'; $('trace-note').textContent = 'Diagram utama menunjukkan keadaan saat ini.';
   } else {
-    $('code').innerHTML = trace.lines.map((line,i)=>`<div class="code-line ${i===traceIndex?'active':''}"><span class="line-number">${i+1}</span>${escape(line)}</div>`).join('');
+    $('code').innerHTML = trace.lines.map((line,i)=>`<button class="code-line ${i===traceIndex?'active':''} ${trace.steps.includes(i)?'':'skipped'}" data-trace-line="${i}" ${trace.steps.includes(i)?'':'disabled'} aria-current="${i===traceIndex?'step':'false'}" aria-label="Baris ${trace.lineNumbers?.[i]??i+1}: ${escape(line.trim())}${trace.steps.includes(i)?'':'; cabang tidak dijalankan'}"><span class="line-number">${trace.lineNumbers?.[i]??i+1}</span><span>${escape(line)}</span>${trace.steps.includes(i)?'':'<span class="skip-label">dilewati</span>'}</button>`).join('');
     $('trace-position').textContent = `${trace.steps.indexOf(traceIndex)+1} / ${trace.steps.length}`;
     $('trace-note').innerHTML = `${escape(trace.notes[traceIndex]||'')}<span class="trace-snapshot">${escape(trace.snapshots[traceIndex]||'')}</span>`;
   }
   $('trace-prev').disabled = !trace || traceIndex===trace.steps[0];
   $('trace-next').disabled = !trace || traceIndex===trace.steps.at(-1);
   $('trace-play').disabled = !trace;
+  renderExecution();
 }
 function notify(text, error = false, operation = null) {
   feedback = {text,error};
+  if (operation && !['peek()','empty()','cari()','reset()'].includes(operation)) edited[room] = true;
   if (operation) { operationCount++; logs.unshift({time:room==='queue'?clock():String(operationCount).padStart(2,'0'),operation,text}); logs = logs.slice(0,100); }
   renderFeedback(); renderLog();
 }
 function renderFeedback() {
   $('feedback').classList.toggle('error',feedback.error);
-  $('feedback').innerHTML = `<span class="feedback-symbol">${feedback.error?'!':'i'}</span><p>${escape(feedback.text)}</p>`;
+  $('feedback').innerHTML = `<span class="feedback-symbol">${feedback.error?'!':'i'}</span><div><p>${escape(feedback.text)}</p>${trace?'<a href="#execution-lab">Telusuri operasi ini di Bedah Eksekusi</a>':''}</div>`;
 }
 function renderLog() {
   $('log').innerHTML = logs.length ? logs.map(l=>`<li><time>${escape(l.time)}</time><code>${escape(l.operation)}</code><span>${escape(l.text)}</span></li>`).join('') : '<li class="log-empty">Setiap operasi akan dicatat di sini.</li>';
@@ -171,15 +209,21 @@ function renderQueueScene() {
 function field(label,id,value,type='text',full=false,extra='') { return `<label class="field ${full?'full':''}">${label}<input id="${id}" value="${escape(value)}" type="${type}" ${extra}></label>`; }
 function renderStackControls() {
   const s=racks[rack], chosen=racks.flatMap(r=>r.values()).find(p=>p.id===selectedItem);
-  $('controls').innerHTML=`<section class="control-section"><div class="control-title">Rak penyimpanan <span>top: ${escape(s.peek()?.id??'None')}</span></div><div class="rack-tabs">${rackNames.map((n,i)=>`<button data-rack="${i}" class="${rack===i?'active':''}">${n}</button>`).join('')}</div><div class="capacity"><span>${s.count} / ${s.maxItems} barang</span><span>${s.weight} / ${s.maxWeight} kg</span></div><div class="capacity-track"><span style="width:100%;transform:scaleX(${Math.max(s.count/s.maxItems,s.weight/s.maxWeight)})"></span></div><details class="capacity-settings"><summary>Ubah batas kapasitas</summary><form id="capacity-form"><div class="form-grid">${field('Maks. barang','max-items',s.maxItems,'number',false,'min="1" max="12" required')}${field('Maks. berat (kg)','max-weight',s.maxWeight,'number',false,'min="0.1" max="1000" step="0.1" required')}</div><button class="secondary" style="margin-top:8px">Simpan batas</button></form></details></section>
+  const capacityOpen=$('controls').querySelector('.capacity-settings')?.open;
+  $('controls').innerHTML=`<section class="control-section"><div class="control-title">Rak penyimpanan <span>top: ${escape(s.peek()?.id??'None')}</span></div><div class="rack-tabs">${rackNames.map((n,i)=>`<button data-rack="${i}" class="${rack===i?'active':''}">${n}</button>`).join('')}</div><div class="capacity"><span>${s.count} / ${s.maxItems} barang</span><span>${s.weight} / ${s.maxWeight} kg</span></div><div class="capacity-track"><span style="width:100%;transform:scaleX(${Math.max(s.count/s.maxItems,s.weight/s.maxWeight)})"></span></div><details class="capacity-settings" ${capacityOpen?'open':''}><summary>Ubah batas kapasitas</summary><form id="capacity-form"><div class="form-grid">${field('Maks. barang','max-items',s.maxItems,'number',false,'min="1" max="12" required')}${field('Maks. berat (kg)','max-weight',s.maxWeight,'number',false,'min="0.1" max="1000" step="0.1" required')}</div><button class="secondary" style="margin-top:8px">Simpan batas</button></form></details></section>
   <section class="control-section"><div class="control-title">Barang baru</div><form id="push-form"><div class="form-grid">${field('ID barang','item-id',`G${String(serial).padStart(2,'0')}`,'text',false,'maxlength="12" required')}${field('Berat (kg)','item-weight','3','number',false,'min="0.1" max="1000" step="0.1" required')}${field('Nama barang','item-name','Modul cadangan','text',true,'maxlength="50" required')}<label class="field full">Kategori<select id="item-category"><option>Elektronik</option><option>Peralatan</option><option>Dokumen</option><option>Lainnya</option></select></label></div><button class="primary" type="submit">${icon('plus')}Simpan barang <span>/ push</span></button></form><div class="operation-row"><button class="secondary" data-action="pop">${icon('up')}Ambil / pop</button><button class="secondary" data-action="peek">${icon('eye')}Lihat / peek</button></div><button class="text-button" data-action="empty" style="margin-top:9px">Periksa isEmpty()</button></section>
   <section class="control-section"><div class="control-title">Pindahkan barang teratas</div><div class="transfer-row"><select id="destination" aria-label="Rak tujuan">${rackNames.map((n,i)=>i===rack?'':`<option value="${i}" ${i===2?'selected':''}>${n}</option>`).join('')}</select><button class="secondary" data-action="transfer">Pindahkan</button></div>${chosen?`<div class="selection-detail"><strong>${escape(chosen.id)} · ${escape(chosen.name)}</strong><span>${chosen.weight} kg · ${escape(chosen.category)}</span><span>${s.peek()?.id===chosen.id?'Teratas: dapat diambil langsung.':`Tertimbun: ${s.values().findIndex(p=>p.id===chosen.id)} barang penghalang.`}</span></div>`:''}<form id="find-form" class="transfer-row"><input id="search-item" aria-label="Cari barang berdasarkan ID" placeholder="Cari ID barang…" maxlength="12" style="width:100%;min-width:0;border:1px solid var(--line);border-radius:5px;padding:8px;font-size:11px"><button class="secondary">Cari</button></form>${predictionHTML()}</section>`;
 }
+function predictionState() {
+  if (!missions[room].active || missions[room].wasComplete || room==='queue' && clinic.active) return null;
+  const values=room==='stack'?racks[rack].values():clinic.queues.flatMap(q=>q.values());
+  if (values.length<2) return null;
+  return {key:`${room}:${room==='stack'?rack:queueMode}:${values.map(p=>p.id).join(',')}`, expected:values[0].id, options:[values.at(-1).id,values[0].id]};
+}
 function predictionHTML() {
-  const m=missions[room]; if(!m.active || m.prediction) return m.prediction?`<div class="prediction-result">Prediksi: ${escape(m.prediction)}</div>`:'';
-  if(room==='queue'&&!m.critical) return '';
-  const ids=room==='stack'?['A','D']:['P01','P04'];
-  return `<div class="prediction">${room==='stack'?'Barang mana yang perlu dipindahkan lebih dulu?':'Pasien mana yang dipanggil berikutnya?'}<div class="operation-row">${ids.map(id=>`<button class="secondary" data-predict="${id}">${id}</button>`).join('')}</div></div>`;
+  const state=predictionState(); if(!state) return '';
+  const result=missions[room].prediction, current=result?.key===state.key;
+  return `<div class="prediction" tabindex="-1"><strong>${room==='stack'?`Jika pop pada ${rackNames[rack]} sekarang, barang mana yang keluar?`:'Jika dipanggil sekarang, pasien mana yang dilayani berikutnya?'}</strong>${current?`<p class="prediction-result ${result.correct?'':'incorrect'}" role="status">${escape(result.text)}</p>`:''}${current&&result.correct?'':`<div class="operation-row">${state.options.map(id=>`<button class="secondary" data-predict="${escape(id)}">${escape(id)}</button>`).join('')}</div>`}</div>`;
 }
 function renderQueueControls() {
   const all=clinic.queues.flatMap(q=>q.values()), chosen=all.find(p=>p.id===selectedPatient);
@@ -192,7 +236,7 @@ function renderNodes() {
   const first=room==='stack'?'top':'front';
   $('structure-label').textContent=`Linked-list · ${room==='stack'?rackNames[rack]:queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}`;
   $('nodes').innerHTML=values.length?values.map((p,i)=>`<div data-node="${escape(p.id)}" class="node ${p.id===(room==='stack'?selectedItem:selectedPatient)?'selected':''}">${i===0||room==='queue'&&i===values.length-1?`<span class="pointer-label">${i===0?first:''}${room==='queue'&&i===values.length-1?i===0?' / rear':'rear':''} ↓</span>`:''}<span class="node-data">${escape(p.id)}</span><span class="node-next">next</span></div><span class="arrow">→</span>`).join('')+'<span class="null">None</span>':`<span class="null">${first} → None${room==='queue'?' &nbsp; · &nbsp; rear → None':''}</span>`;
-  $('structure-note').textContent=room==='stack'?'Panah next bergerak dari top menuju dasar rak. Push dan pop dasar: O(1). Pencarian: O(n).':'Panah next bergerak dari front ke rear. Enqueue dan dequeue dasar: O(1). Pencarian untuk pembatalan: O(n).';
+  $('structure-note').textContent=room==='stack'?'Panah next bergerak dari top menuju dasar rak. Push/pop inti: O(1). Pencarian: O(n). Perekaman node untuk pembelajaran menambah O(n) per langkah.':'Panah next bergerak dari front ke rear. Enqueue/dequeue inti: O(1). Pencarian pembatalan: O(n). Perekaman node untuk pembelajaran menambah O(n) per langkah.';
 }
 function renderMission() {
   const m=missions[room]; let complete=false, stages;
@@ -216,13 +260,25 @@ function renderMission() {
   let hint='';
   if(m.active&&!complete){
     if(room==='stack'){
-      hint=!m.removed?(racks[0].peek()?.id==='B'?'Ambil B dari Rak A.':`Pindahkan ${racks[0].peek()?.id??'penghalang'} dari Rak A ke Bantuan.`):`Kembalikan ${racks[2].peek()?.id??'barang penghalang'} dari Bantuan ke Rak A.`;
+    const location=id=>racks.findIndex(s=>s.values().some(p=>p.id===id));
+    const missing=['A','C','D',...(!m.removed?['B']:[])].find(id=>location(id)<0);
+    if(missing) hint=`${missing} sudah keluar dari arena. Ulangi misi untuk memulihkan skenario.`;
+    else if(!m.removed){
+      const source=location('B');
+      hint=racks[source].peek()?.id==='B'?`Ambil B dari ${rackNames[source]}.`:`Pindahkan ${racks[source].peek().id} dari ${rackNames[source]} ke ${source===2?'Rak B':'Bantuan'}.`;
+    }else{
+      const expected=['D','C','A'], target=expected.findLast(id=>location(id)!==0);
+      if(target){
+        const source=location(target),top=racks[source].peek().id;
+        hint=top===target?`Kembalikan ${target} dari ${rackNames[source]} ke Rak A.`:`Pindahkan ${top} dari ${rackNames[source]} ke ${source===2?'Rak B':'Bantuan'} agar ${target} dapat diambil.`;
+      }else hint='Urutan Rak A belum tepat. Ulangi misi dan kembalikan C sebelum D.';
+    }
     }else hint=!m.critical?'Daftarkan P04 dengan tingkat kritis.':!m.servedCritical?(clinic.active?'Majukan ke kejadian berikut untuk menyelesaikan pelayanan.':'Panggil P04 dari jalur kritis.') :!m.fifo?'Panggil P02; P03 datang setelahnya.':'Pilih P01 lalu batalkan antreannya.';
   }
   $('mission-next').textContent=hint?`Langkah berikut: ${hint}`:'';
   if(complete&&!m.wasComplete){
     completedMissions.add(room);clearTimeout(achievementTimer);
-    $('achievement').innerHTML=`${icon('check')}<div><strong>Misi selesai.</strong><small>${room==='stack'?'Urutan pulih. Konsep LIFO dikuasai.':'Prioritas tertib. FIFO tetap terjaga.'}</small></div>`;
+    $('achievement').innerHTML=`${icon('check')}<div><strong>Misi selesai.</strong><small>${room==='stack'?'B diambil. Urutan A–C–D pulih.':'P04 selesai. P02 dipanggil sebelum P03.'}</small></div>`;
     $('achievement').hidden=false;
     if(motionAllowed())$('achievement').animate([{opacity:0,transform:'translate(-50%, -8px) scale(.97)'},{opacity:1,transform:'translate(-50%, 0) scale(1)'}],{duration:260,easing:'cubic-bezier(.16,1,.3,1)'});
     achievementTimer=setTimeout(()=>$('achievement').hidden=true,3500);
@@ -292,7 +348,7 @@ function render() {
   let focusSelector=focused.id?`#${CSS.escape(focused.id)}`:null;
   if(!focusSelector){
     const zone=focused.closest('#scene')?'#scene ':focused.closest('#controls')?'#controls ':'';
-    const attribute=['data-item','data-patient','data-action','data-quick','data-rack','data-queue','data-mode','data-room'].find(a=>focused.hasAttribute(a));
+    const attribute=['data-item','data-patient','data-action','data-quick','data-rack','data-queue','data-mode','data-room','data-predict'].find(a=>focused.hasAttribute(a));
     if(attribute)focusSelector=`${zone}[${attribute}="${CSS.escape(focused.getAttribute(attribute))}"]`;
     else if(focused.closest('form'))focusSelector=`#${focused.closest('form').id} button`;
   }
@@ -309,23 +365,35 @@ function render() {
   $('scene-caption').textContent=room==='stack'?'Kotak paling atas adalah pintu masuk dan keluar Stack.':'Pasien baru masuk dari rear. Pelayanan mengambil dari front.';
   document.querySelector('.scene-legend').innerHTML=room==='stack'?'<i class="legend-item"></i> Barang <i class="legend-target"></i> Target misi':'<i style="background:#2f39a9"></i> Kritis <i style="background:#2e6fa0"></i> Darurat <i style="background:#49a4bb"></i> Non-darurat';
   if(room==='stack'){renderStackScene();renderStackControls();}else{renderQueueScene();renderQueueControls();}
-  for(const [id,value] of Object.entries(drafts[room]))if($(id))$(id).value=value;
+  const values={...drafts[room],...(room==='stack'?capacityDrafts[rack]:{})};
+  for(const [id,value] of Object.entries(values)){
+    if(id==='destination'&&(Number(value)===rack||!racks[Number(value)]))continue;
+    if($(id))$(id).value=value;
+  }
+  document.querySelectorAll('#controls [data-rack],#controls [data-mode],#scene [role="button"]').forEach(button=>{
+    const selected=button.dataset.mode?button.dataset.mode===queueMode:button.dataset.item?button.dataset.item===selectedItem:button.dataset.patient?button.dataset.patient===selectedPatient:button.dataset.rack!==undefined?Number(button.dataset.rack)===rack:Number(button.dataset.queue)===selectedQueue;
+    button.setAttribute('aria-pressed',String(selected));
+  });
   const cameraMoved=applyCamera(sameRoom,oldTransform);animateScene(oldPositions,cameraMoved);
   drawnRoom=room;
   renderNodes();renderMission();renderHUD();renderFeedback();renderTrace();renderLog();
   if(lastObject&&motionAllowed())document.querySelector(`[data-node="${CSS.escape(lastObject)}"]`)?.animate([{opacity:.4,transform:'translateX(-10px)'},{opacity:1,transform:'translateX(0)'}],{duration:200/motionSpeed,easing:'cubic-bezier(.16,1,.3,1)'});
   lastObject=null;
-  if(focusSelector)document.querySelector(focusSelector)?.focus({preventScroll:true});
+  if(focusSelector){
+    const target=document.querySelector(focusSelector);
+    if(target&&!target.disabled)target.focus({preventScroll:true});
+    else (focused.hasAttribute('data-predict')?document.querySelector('.prediction')??$('feedback'):$('feedback')).focus();
+  }
 }
 
 function run(operation) {
-  try { operation(); render(); } catch(error) { notify(error.message,true); }
+  try { operation(); render(); } catch(error) { stopTrace(); trace=null; renderTrace(); notify(error.message,true); $('feedback').focus(); }
 }
 function performTransfer(source,destination,expectedId=null) {
   if(!Number.isInteger(source)||!Number.isInteger(destination)||!racks[source]||!racks[destination])throw new Error('Pilih rak sumber dan tujuan yang valid.');
   if(expectedId&&racks[source].peek()?.id!==expectedId)throw new Error('Barang tersebut sudah bukan top. Pilih barang teratas saat ini.');
   const data=transfer(racks[source],racks[destination]);selectedItem=data.id;lastObject=data.id;
-  setTrace(['data = sumber.peek()','tujuan.push(data)  # cek kapasitas','sumber.pop()'],['Lihat top sumber tanpa menghapusnya.','Push memvalidasi kapasitas tujuan; jika gagal, sumber tetap utuh.','Setelah push berhasil, pop mengambil node dari sumber.'],[`sumber.top → ${data.id}`,`tujuan.top → ${data.id}`,`sumber.top → ${racks[source].peek()?.id??'None'}`]);
+  traceExecution([{execution:racks[destination].lastExecution,context:`Pindah · 1/2 push tujuan ${rackNames[destination]}`},{execution:racks[source].lastExecution,context:`Pindah · 2/2 pop sumber ${rackNames[source]}`}]);
   if(missions.stack.active&&racks[0].peek()?.id==='B')missions.stack.cleared=true;
   notify(`${data.id}: ${rackNames[source]} → ${rackNames[destination]}. Push ke tujuan dan pop dari sumber berhasil.`,false,'pindah()');rack=destination;
 }
@@ -370,8 +438,13 @@ $('scene').addEventListener('lostpointercapture',event=>{if(event.target===$('sc
 document.addEventListener('keydown',event=>{keyboardInput=true;document.body.classList.add('keyboard-input');if(event.key==='Escape')endDrag();},true);
 document.addEventListener('pointerdown',()=>{keyboardInput=false;document.body.classList.remove('keyboard-input');},true);
 document.addEventListener('pointerup',()=>{if(suppressClick)setTimeout(()=>suppressClick=false,0);},true);
-document.addEventListener('input',event=>{if(event.target.closest('#push-form,#register-form,#find-form'))drafts[room][event.target.id]=event.target.value;});
-document.addEventListener('change',event=>{if(event.target.closest('#push-form,#register-form'))drafts[room][event.target.id]=event.target.value;});
+document.addEventListener('input',event=>{
+  if(event.target.closest('#push-form,#register-form,#find-form,#capacity-form')){
+    const draft=event.target.closest('#capacity-form')?capacityDrafts[rack]:drafts[room];
+    draft[event.target.id]=event.target.value;edited[room]=true;
+  }
+});
+document.addEventListener('change',event=>{if(event.target.closest('#push-form,#register-form')||event.target.id==='destination'){drafts[room][event.target.id]=event.target.value;edited[room]=true;}});
 document.addEventListener('change',event=>{if(event.target.id==='destination')renderHUD();});
 document.addEventListener('click',event=>{
   if(suppressClick){suppressClick=false;event.preventDefault();return;}
@@ -383,10 +456,12 @@ document.addEventListener('click',event=>{
     endDrag();room=button.dataset.room;camera.zoom=1;camera.focus=false;stopTrace();trace=null;clearTimeout(achievementTimer);$('achievement').hidden=true;feedback={text:room==='stack'?'Pilih rak, lalu coba push atau pop.':'Pilih pasien untuk melihat estimasi tunggu. Panggil pasien saat loket tersedia.',error:false};render();return;
   }
   if(button.dataset.mode) {
-    if(queueMode!==button.dataset.mode) {queueMode=button.dataset.mode;missions.queue={active:false};drafts.queue={};seedQueue();stopTrace();trace=null;notify('Mode diubah. Antrean dimuat ulang untuk eksperimen baru.');render();}return;
+    if(queueMode!==button.dataset.mode) replaceExperiment('Mengganti mode akan mengganti seluruh antrean dengan data contoh, mengosongkan laporan, dan menghentikan pelayanan saat ini.',()=>{queueMode=button.dataset.mode;missions.queue={active:false};drafts.queue={};seedQueue();stopTrace();trace=null;edited.queue=false;notify('Mode diubah. Antrean dimuat ulang untuk eksperimen baru.');render();});return;
   }
   if(button.dataset.predict) {
-    const expected=room==='stack'?'D':'P04';missions[room].prediction=button.dataset.predict===expected?'Benar! '+(room==='stack'?'D adalah top.':'P04 memiliki prioritas tertinggi.'):'Coba amati kembali: '+(room==='stack'?'D berada paling atas.':'P04 dipilih dari jalur kritis.');render();return;
+    const state=predictionState();if(!state)return;
+    const correct=button.dataset.predict===state.expected;
+    missions[room].prediction={key:state.key,correct,text:correct?`Benar. ${state.expected} ${room==='stack'?'berada pada top; pop mengambil node ini.':queueMode==='fifo'?'berada pada front; pasien ini masuk lebih dulu.':'berada pada front jalur berprioritas tertinggi yang terisi.'}`:room==='stack'?'Belum tepat. Ikuti penanda top pada rak yang dipilih, lalu coba lagi.':'Belum tepat. Periksa prioritas jalur dan penanda front, lalu coba lagi.'};render();return;
   }
   if(button.dataset.patient){selectedPatient=button.dataset.patient;selectedQueue=Number(button.dataset.queue);render();return;}
   if(button.dataset.rack!==undefined){rack=Number(button.dataset.rack);selectedItem=button.dataset.item??null;render();return;}
@@ -403,18 +478,19 @@ document.addEventListener('click',event=>{
     }
     if(action==='pop') {
       const data=racks[rack].pop(); selectedItem=null;
-      tracePop(data?.id??'None',racks[rack].peek()?.id??'None',!data);
-      if(data?.id==='B'&&missions.stack.active&&rack===0)missions.stack.removed=true;
+      traceExecution([{execution:racks[rack].lastExecution,context:`${rackNames[rack]} · pop`}]);
+      if(data?.id==='B'&&missions.stack.active)missions.stack.removed=true;
       notify(data?`pop() → ${data.id} (${data.name}). Top sekarang ${racks[rack].peek()?.id??'None'}.`:'Underflow: Stack kosong. pop() mengembalikan None.',!data,'pop()');
     }
     if(action==='transfer') {
       performTransfer(rack,Number($('destination').value));
     }
     if(action==='call') {
-      const q=clinic.queues.find(q=>!q.isEmpty()),rear=q?.rear?.data.id??'None';
+      const q=clinic.queues.find(q=>!q.isEmpty());
       const p=clinic.call();selectedPatient=null;
       if(p)selectedQueue=priorities.indexOf(p.priority);
-      traceDequeue(p,q?.front?.data.id??'None',rear);
+      if(q)traceExecution([{execution:q.lastExecution,context:`Jalur ${priorityNames[selectedQueue]} · dequeue`}]);
+      else setTrace(['if semua_jalur_kosong:', '    return None'], ['Semua Queue kosong; tidak ada jalur untuk dipanggil.', 'Pemanggilan mengembalikan None tanpa menjalankan dequeue pada jalur.']);
       if(missions.queue.active&&p?.id==='P02'&&missions.queue.servedCritical&&clinic.queues[1].peek()?.id==='P03')missions.queue.fifo=true;
       notify(p?`${p.id} (${p.name}) mulai dilayani. ${queueMode==='fifo'?'FIFO memilih pasien terdepan.':priorityNames[selectedQueue]+' adalah jalur tertinggi yang berisi pasien.'} Selesai ${clock(clinic.active.endsAt)}.`:'Underflow: semua jalur kosong. dequeue() mengembalikan None.',!p,'dequeue()');
     }
@@ -438,19 +514,23 @@ document.addEventListener('click',event=>{
 // SVG objects expose the same actions to keyboard users as the control buttons.
 $('scene').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[role="button"]')){e.preventDefault();e.target.dispatchEvent(new MouseEvent('click',{bubbles:true}));}});
 document.addEventListener('submit',event=>{
+  if(!['push-form','capacity-form','find-form','register-form'].includes(event.target.id))return;
   event.preventDefault();
   run(()=>{
     if(event.target.id==='push-form') {
       const data=item($('item-id').value.trim(),$('item-name').value.trim(),Number($('item-weight').value),$('item-category').value);
       if(racks.flatMap(r=>r.values()).some(p=>p.id===data.id))throw new Error('ID barang sudah digunakan. Isi ID yang berbeda.');
-      const before=racks[rack].peek()?.id??'None';racks[rack].push(data);serial++;drafts.stack={};selectedItem=data.id;lastObject=data.id;tracePush(before,data);
+      racks[rack].push(data);serial++;
+      for(const id of ['item-id','item-name','item-weight','item-category'])delete drafts.stack[id];
+      selectedItem=data.id;lastObject=data.id;
+      traceExecution([{execution:racks[rack].lastExecution,context:`${rackNames[rack]} · push`}]);
       notify(`push(${data.id}) berhasil. Top ${rackNames[rack]} sekarang ${data.id}; berat ${racks[rack].weight} kg.`,false,`push(${data.id})`);
     }
     if(event.target.id==='capacity-form') {
       const maxItems=Number($('max-items').value),maxWeight=Number($('max-weight').value),s=racks[rack];
       if(!Number.isInteger(maxItems)||maxItems<1||maxItems>12||!Number.isFinite(maxWeight)||maxWeight<=0||maxWeight>1000)throw new Error('Isi kapasitas 1–12 barang dan berat positif hingga 1000 kg.');
       if(maxItems<s.count||maxWeight<s.weight)throw new Error('Batas baru lebih kecil dari isi rak. Ambil barang terlebih dahulu.');
-      s.maxItems=maxItems;s.maxWeight=maxWeight;notify('Batas kapasitas rak diperbarui.',false,'kapasitas()');
+      s.maxItems=maxItems;s.maxWeight=maxWeight;capacityDrafts[rack]={};notify('Batas kapasitas rak diperbarui.',false,'kapasitas()');
     }
     if(event.target.id==='find-form') {
       const id=$('search-item').value.trim();const ri=racks.findIndex(s=>s.values().some(p=>p.id===id));
@@ -459,23 +539,32 @@ document.addEventListener('submit',event=>{
       notify(`${id} ada di ${rackNames[rack]}. ${blockers?`${blockers} penghalang perlu dipindahkan sebelum target diambil.`:'Barang berada di top dan dapat diambil langsung.'}`,false,'cari()');
     }
     if(event.target.id==='register-form') {
-      const priority=queueMode==='fifo'?'non-darurat':$('patient-priority').value,rank=priorities.indexOf(priority),q=clinic.queues[rank],oldRear=q.rear?.data.id??'None',oldFront=q.front?.data.id??'None';
-      const p=clinic.register({id:$('patient-id').value.trim(),name:$('patient-name').value.trim(),priority});patientSerial++;drafts.queue={};selectedPatient=p.id;selectedQueue=rank;lastObject=p.id;traceEnqueue(p,oldRear,oldFront);
+      const priority=queueMode==='fifo'?'non-darurat':$('patient-priority').value,rank=priorities.indexOf(priority),q=clinic.queues[rank];
+      const p=clinic.register({id:$('patient-id').value.trim(),name:$('patient-name').value.trim(),priority});patientSerial++;drafts.queue={};selectedPatient=p.id;selectedQueue=rank;lastObject=p.id;
+      traceExecution([{execution:q.lastExecution,context:`Jalur ${priorityNames[rank]} · enqueue`}]);
       if(missions.queue.active&&p.id==='P04'&&priority==='kritis')missions.queue.critical=true;
       notify(`${p.id} masuk dari rear ${queueMode==='fifo'?'antrean FIFO':'jalur '+priorityNames[rank]}. Estimasi tunggu ${clinic.estimate(p.id)} menit berdasarkan antrean saat ini.`,false,`enqueue(${p.id})`);
     }
   });
 });
-$('start-mission').addEventListener('click',()=>{
+$('start-mission').addEventListener('click',()=>replaceExperiment('Memulai atau mengulang misi akan mengganti isi ruang ini dengan skenario misi. Eksperimen saat ini akan hilang.',()=>{
   endDrag();stopTrace();trace=null;drafts[room]={};clearTimeout(achievementTimer);$('achievement').hidden=true;
   if(room==='stack'){missions.stack={active:true,removed:false,cleared:false};seedStack(true);}else{queueMode='priority';missions.queue={active:true,critical:false,servedCritical:false,fifo:false,cancelled:false};seedQueue(true);}
   notify(room==='stack'?'Misi dimulai. Cari B, pindahkan D lalu C ke Bantuan, kemudian ambil B.':'Misi dimulai. Daftarkan P04 sebagai kritis melalui registrasi.',false,'misi()');render();
+}));
+$('reset').addEventListener('click',()=>replaceExperiment('Atur ulang akan mengganti isi ruang ini dengan data contoh dan mengakhiri misi yang berjalan.',()=>{endDrag();stopTrace();trace=null;drafts[room]={};camera.zoom=1;camera.focus=false;clearTimeout(achievementTimer);$('achievement').hidden=true;missions[room]={active:false};if(room==='stack')seedStack();else seedQueue();edited[room]=false;notify('Ruang diatur ulang. Data contoh siap digunakan.',false,'reset()');render();}));
+$('replace-confirm').addEventListener('close',()=>{
+  const action=pendingReplacement;pendingReplacement=null;
+  if($('replace-confirm').returnValue==='replace')action?.();
 });
-$('reset').addEventListener('click',()=>{endDrag();stopTrace();trace=null;drafts[room]={};camera.zoom=1;camera.focus=false;clearTimeout(achievementTimer);$('achievement').hidden=true;missions[room]={active:false};if(room==='stack')seedStack();else seedQueue();notify('Ruang diatur ulang. Data contoh siap digunakan.',false,'reset()');render();});
 $('clear-log').addEventListener('click',()=>{logs=[];renderLog();});
 $('help').addEventListener('click',()=>$('guide').showModal());
 $('close-guide').addEventListener('click',()=>$('guide').close());
-$('reduce-motion').checked=matchMedia('(prefers-reduced-motion: reduce)').matches;
+$('reduce-motion').checked=motionPreference.matches;
+motionPreference.addEventListener?.('change',()=>{
+  $('reduce-motion').checked=motionPreference.matches||document.body.classList.contains('reduced-motion');
+  if(motionPreference.matches)document.getAnimations().forEach(a=>a.cancel());
+});
 $('reduce-motion').addEventListener('change',event=>{document.body.classList.toggle('reduced-motion',event.target.checked);if(event.target.checked)document.getAnimations().forEach(a=>a.cancel());});
 $('zoom-in').addEventListener('click',()=>{camera.zoom=Math.min(1.8,Math.round((camera.zoom+.2)*10)/10);applyCamera();});
 $('zoom-out').addEventListener('click',()=>{camera.zoom=Math.max(1,Math.round((camera.zoom-.2)*10)/10);applyCamera();});
@@ -491,5 +580,11 @@ function playTrace(){
   traceTimer=setInterval(()=>{const position=trace.steps.indexOf(traceIndex);if(position<trace.steps.length-1){traceIndex=trace.steps[position+1];renderTrace();}else stopTrace();},1100/motionSpeed);
 }
 $('trace-play').addEventListener('click',playTrace);
+$('code').addEventListener('click',event=>{
+  const line=event.target.closest('[data-trace-line]');
+  if(!line||!trace||!trace.steps.includes(Number(line.dataset.traceLine)))return;
+  stopTrace();traceIndex=Number(line.dataset.traceLine);renderTrace();
+  $('code').querySelector(`[data-trace-line="${traceIndex}"]`)?.focus({preventScroll:true});
+});
 $('trace-prev').innerHTML=icon('arrow');$('trace-prev').querySelector('svg').style.transform='rotate(180deg)';$('trace-next').innerHTML=icon('arrow');
 render();

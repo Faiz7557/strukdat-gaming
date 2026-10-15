@@ -24,20 +24,20 @@ typography:
     letterSpacing: "-.9px"
   title:
     fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
-    fontSize: "13px"
+    fontSize: "16px"
     fontWeight: 500
     lineHeight: 1.5
   body:
     fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
-    fontSize: "14px"
+    fontSize: "15px"
     fontWeight: 400
     lineHeight: 1.5
   label:
     fontFamily: "Ubuntu, 'Segoe UI', sans-serif"
-    fontSize: "11px"
+    fontSize: "13px"
   code:
     fontFamily: "Consolas, monospace"
-    fontSize: "11px"
+    fontSize: "13px"
     lineHeight: 2.15
 rounded:
   field: "6px"
@@ -72,7 +72,7 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.field}"
     padding: "9px 10px"
-    height: "37px"
+    height: "44px"
   room-navigation:
     backgroundColor: "#f7f8fb"
     textColor: "{colors.muted}"
@@ -158,24 +158,23 @@ Palet bergerak dari indigo teknis menuju turquoise aktif di atas permukaan putih
 
 ### Hierarchy
 
-- **Headline**: judul ruang mengikuti token `headline`; pada layar kecil ukuran menjadi 29px.
-- **Title**: judul panel mengikuti token `title`.
-- **Body**: dasar halaman mengikuti token `body`; penjelasan ruang menggunakan 12px dengan line-height 1.65 dan lebar maksimum 620px.
-- **Label**: label field menggunakan token `label`; badge dan keterangan ringkas pada implementasi berkisar 9–11px.
-- **Code**: jejak Python mengikuti token `code`, sedangkan diagram data memakai monospace 13px.
-- **Wordmark**: identitas memakai 25px, bobot 500, letter-spacing -.8px; menjadi 24px lalu 21px pada breakpoint lebih kecil.
+- **Headline:** 34px desktop, 30px ponsel, Ubuntu Medium.
+- **Title:** 16px panel, 18px misi, 26px Bedah Eksekusi (24px ponsel).
+- **Body:** dasar 15px; penjelasan ruang, misi, feedback, dan materi 14px dengan line-height 1.7–1.8.
+- **Label:** 13px untuk field; 12px untuk metadata, badge, dan petunjuk ringkas. Teks informasi tidak memakai turquoise terang.
+- **Code:** 13px desktop, 12px ponsel. Nomor baris memakai tinta gelap; teks next memakai biru operator agar kontras di permukaan pucat cukup.
 
-Angka jam, kapasitas, dan laporan memakai angka tabular. Label menggunakan kalimat biasa; tidak ada sistem huruf kapital wajib.
+Angka jam, kapasitas, dan laporan memakai angka tabular. Font lokal dipertahankan.
 
 ## Layout
 
-Model ruang adalah rail navigasi tetap, topbar, judul ruang, lalu arena dan panel operator. Rail desktop selebar 84px; shell dimulai setelah rail. Topbar setinggi 92px. Area utama terpusat dengan lebar maksimum 1680px dan inset 28px 36px 16px. Workspace memiliki kolom arena fleksibel dan panel operator 320px, dipisahkan 22px. Di atas 1600px panel operator menjadi 350px.
+Urutan belajar: tujuan misi → arena → aksi cepat → hasil operasi → linked-list → Bedah Eksekusi. Panel kontrol lengkap berada di kanan pada desktop; feedback berada setelah aksi arena dan menautkan rekaman kode saat tersedia.
 
-Pada 1200px atau kurang, inset horizontal menjadi 24px, panel operator 300px, dan gap workspace 16px. Beberapa keterangan sekunder disembunyikan; footer arena dan bagian misi dapat membungkus. Pada 900px atau kurang rail menjadi 66px, topbar membungkus dengan pemilih ruang selebar baris, workspace menjadi satu kolom, dan panel operator membagi kontrol serta jejak menjadi dua kolom.
+Rail desktop tetap 84px (66px pada tablet); shell memiliki topbar dan area utama. Workspace memakai arena fleksibel dan kontrol 360px, menjadi 320px di bawah 1200px. Pada 1050px atau kurang, workspace dan Bedah Eksekusi menjadi satu kolom; tautan kontrol lengkap tampil setelah aksi cepat. Prinsip LIFO/FIFO tetap terlihat pada semua ukuran.
 
-Pada 540px atau kurang rail menjadi 52px, inset halaman 12px, panel operator menjadi satu kolom, dan field memakai font 16px dengan tinggi 40px. SVG memakai lebar 150% dan offset kiri -25% untuk menjaga ukuran objek. Pada seluruh layar 900px atau kurang, arena menyediakan ruang bawah 68px. Petunjuk berada pada baris tersendiri dengan margin horizontal 10px. Kontrol kamera berukuran 44 × 44px, dan tombol operasi cepat setinggi minimum 44px tampil tepat setelah dunia, termasuk pada panel browser dan tablet. Bilah kamera dibatasi oleh lebar arena agar tidak terpotong pada layar 320px. Di bawah 380px ikon pendamping operasi cepat disembunyikan; nama tindakan tetap terlihat.
+Pada 540px atau kurang, navigasi menjadi bilah bawah 68px ditambah safe area. Rail samping dan pemilih ruang atas digantikan oleh tiga tombol Stack, Queue, dan Panduan pada bilah tersebut. Shell memakai lebar penuh dan menyisakan ruang bawah untuk navigasi. Inset halaman 16px; field 16px dengan tinggi 44px. SVG memakai lebar 125% dan offset -12.5% untuk menjaga ukuran objek. Diagram node dan kode bergulir di dalam panel tanpa memperlebar halaman.
 
-Dunia menggunakan viewBox 940 × 570. Diagram node dan jejak kode dapat bergulir secara horizontal tanpa memaksakan lebar halaman. Kontrol yang lebih panjang tetap di panel operator; operasi cepat menyediakan akses dekat dunia pada ponsel, tablet, dan panel browser sempit.
+Kontrol kamera dan tombol operasi minimum 44px. Petunjuk arena berada di baris tersendiri; kamera berada di bawahnya. Operasi cepat tersedia pada desktop, tablet, dan ponsel. Lantai arena mengizinkan gulir vertikal (`pan-y`); hanya kotak teratas yang dapat diseret memakai `touch-action: none`.
 
 ## Elevation & Depth
 
@@ -202,8 +201,8 @@ Signature dunia berupa balok SVG tiga sisi dan lantai belah ketupat. Ikon garis 
 
 Tombol terasa ringkas dan tegas.
 
-- **Primary:** indigo dengan teks putih, radius token `button`, padding token komponen, tinggi minimum 40px, dan bobot 500. Biasanya memenuhi lebar field.
-- **Secondary:** putih, teks indigo, border silver, tinggi minimum 36px; pada ponsel minimum 40px. Hover menggunakan indigo pucat.
+- **Primary:** indigo dengan teks putih, radius token `button`, padding token komponen, tinggi minimum 44px, dan bobot 500. Biasanya memenuhi lebar field.
+- **Secondary:** putih, teks indigo, border silver, tinggi minimum 44px. Hover menggunakan indigo pucat.
 - **Text:** tanpa permukaan terpisah, untuk reset dan penghapusan catatan.
 - **Focus:** outline biru 3px dengan offset 4px.
 - **Active / disabled:** skala tekan .97 untuk tombol aktif; disabled memakai opacity .45 dan cursor yang jelas.
@@ -219,7 +218,7 @@ Arena dan panel operator memakai putih, radius token `panel`, border silver, dan
 
 ### Inputs / Fields
 
-Field native memiliki label permanen, permukaan terang, border silver, radius token `field`, dan padding komponen. Fokus menggeser border menjadi indigo dengan bayangan lembut `0 0 0 3px #2f39a90b`; outline keyboard tetap ada. Mobile memakai font 16px dan tinggi 40px. Pesan gagal muncul melalui umpan balik yang memiliki teks, simbol, dan status live; dokumentasi tidak mengklaim error border per-field yang belum ada.
+Field native memiliki label permanen, permukaan terang, border silver, radius token `field`, dan padding komponen. Fokus menggeser border menjadi indigo dengan bayangan lembut `0 0 0 3px #2f39a90b`; outline keyboard tetap ada. Mobile memakai font 16px dan tinggi 44px. Pesan gagal muncul melalui umpan balik yang memiliki teks, simbol, dan status live; dokumentasi tidak mengklaim error border per-field yang belum ada.
 
 ### Navigation
 
@@ -235,7 +234,9 @@ Animasi objek menggunakan lintasan terangkat berhingga (560ms pada kecepatan 1×
 
 ### Linked-list and Python trace
 
-Node menampilkan data, bagian next, dan label pointer. Referensi dihubungkan dengan panah; nilai kosong ditulis None. Diagram menunjukkan keadaan akhir yang sama dengan model dunia. Jejak Python memberi langkah dan snapshot teks tersendiri; playback memakai interval 1100ms pada 1× dan berhenti ketika urutan berakhir. Tidak ada klaim bahwa model dijalankan ulang oleh interpreter Python.
+Node menampilkan data, bagian next, dan label pointer. Diagram utama menunjukkan keadaan akhir yang sama dengan arena. Bedah Eksekusi menampilkan cuplikan Python dari dokumen, baris aktif, cabang tidak dijalankan, serta rekaman referensi dan variabel lokal dari instruksi model JavaScript. Baris dapat dipilih dengan klik atau keyboard. Kontrol playback minimal 44px memakai interval 1100ms pada 1× dan berhenti di akhir. Snapshot tidak memutasi arena. Rekaman empat operasi dasar dibedakan dari penjelasan algoritma operasi lainnya. Sumber dokumen dan nomor baris relatif cuplikan selalu dijelaskan. Implementasi JavaScript aktual dan definisi awal Node/Stack/Queue tersedia dalam disclosure.
+
+Kartu memori menampilkan identitas node lokal N1/N2, data, serta target next secara eksplisit; posisi kartu tidak menyatakan urutan linked-list. Perubahan referensi memakai permukaan turquoise pucat dan teks sebelum→sesudah. Node terlepas bergaris putus-putus; identitas ini bukan alamat RAM dan tidak merepresentasikan garbage collector. Python tidak dijalankan oleh browser. Pencatatan node menambah O(n) per langkah, terpisah dari biaya operasi pointer inti O(1).
 
 Pilihan node menggunakan batas cyan dan permukaan cyan pucat. Baris kode aktif memiliki permukaan indigo pucat serta garis kiri indigo. Tombol sebelum / berikut / putar dan kontrol details memungkinkan inspeksi manual.
 
@@ -264,3 +265,11 @@ Preferensi perangkat dan pilihan Gerakan minimal meniadakan animasi operasi sert
 - **Don't** menggunakan turquoise terang untuk teks informasi utama tanpa pasangan teks gelap.
 - **Don't** menggambarkan jejak Python sebagai interpreter atau animasi langkah model yang belum tersedia.
 
+
+## Kurasi pengalaman belajar · 15 Oktober 2026
+
+Misi, reset, dan pergantian mode meminta konfirmasi jika eksperimen atau isian sudah berubah. Escape dan tombol kembali mempertahankan data. Prediksi membaca top/front saat ini; jawaban salah dapat dicoba lagi dan tidak membuka jawaban langsung. Hint Stack mengikuti lokasi penghalang, termasuk Rak B; jika barang yang diperlukan sudah keluar, hint meminta mengulang skenario. Penyelesaian misi menjelaskan hasil yang teramati tanpa mengklaim penguasaan materi.
+
+Tujuan transfer disimpan selama valid untuk rak sumber. Draft kapasitas disimpan per rak; penambahan barang hanya membersihkan isian formulir barang. Pilihan rak, mode, objek dan jalur memiliki aria-pressed; semua tombol SVG memiliki indikator fokus. Perubahan preferensi reduced motion saat aplikasi terbuka membatalkan animasi yang sedang berjalan.
+
+Lihat AUDIT-UIUX.md untuk temuan, bukti verifikasi, serta batas pengujian.

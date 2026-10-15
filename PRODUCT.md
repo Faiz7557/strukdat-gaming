@@ -20,7 +20,7 @@ Materi sumber adalah PRAKTIKUM 6 Stack.docx dan PRAKTIKUM 7 Queue.docx di direkt
 
 ## Capabilities and Constraints
 
-Stack memiliki tiga rak, batas berat/jumlah, pencarian, push/pop/peek/isEmpty, dan Stack bantuan. Queue memiliki FIFO dasar atau tiga prioritas, pembatalan pasien menunggu, satu loket dengan pelayanan lima menit, jam manual, estimasi tunggu, dan laporan. Model data linked-list harus tetap benar. Python adalah ilustrasi, bukan interpreter. Data berada di memori tab.
+Stack memiliki tiga rak, batas berat/jumlah, pencarian, push/pop/peek/isEmpty, dan Stack bantuan. Queue memiliki FIFO dasar atau tiga prioritas, pembatalan pasien menunggu, satu loket dengan pelayanan lima menit, jam manual, estimasi tunggu, dan laporan. Bedah Eksekusi menghubungkan empat operasi dasar dengan cuplikan Python dari dokumen dan rekaman node/referensi yang diambil saat instruksi model JavaScript berjalan. Python bukan interpreter. Rekaman dapat ditelusuri tanpa mengubah arena. Penjelasan algoritma untuk operasi lainnya diberi label berbeda. Data berada di memori tab.
 
 ## Brand Commitments
 

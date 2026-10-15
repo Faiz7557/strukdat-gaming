@@ -1,3 +1,5 @@
+import { beginExecution } from './execution.js';
+
 export class Node {
   constructor(data) { this.data = data; this.next = null; }
 }
@@ -14,12 +16,26 @@ export class Stack {
     const nextWeight = Math.round((this.weight + data.weight) * 1e6) / 1e6;
     if (this.count >= this.maxItems || nextWeight > this.maxWeight)
       throw new Error('Kapasitas rak tidak cukup. Pilih rak lain atau ambil barang terlebih dahulu.');
-    const node = new Node(data); node.next = this.top; this.top = node;
+    const step = beginExecution(this, 'push', { data });
+    step(0, 'Masuk push; data masukan belum terhubung ke Stack.');
+    const node = new Node(data);
+    step(1, 'Node dibuat dengan next = None. Top belum berubah.', { new_node: node });
+    node.next = this.top;
+    step(2, 'next milik node baru menunjuk top lama. Top masih tetap.');
+    this.top = node;
+    step(3, 'Top kini menunjuk node baru. Inilah alasan barang baru berada paling atas.');
     this.count++; this.weight = nextWeight; return data;
   }
   pop() {
-    if (!this.top) return null;
-    const data = this.top.data; this.top = this.top.next;
+    const step = beginExecution(this, 'pop');
+    step(0, 'Masuk pop; amati node yang ditunjuk top.');
+    step(1, this.top ? 'top is None bernilai False; return None dilewati.' : 'top is None bernilai True; jalankan cabang kosong.');
+    if (!this.top) { step(2, 'Kembalikan None; tidak ada referensi yang berubah.', { hasil: null }); return null; }
+    const data = this.top.data;
+    step(3, 'Simpan data top ke variabel lokal sebelum top dipindahkan.', { data });
+    this.top = this.top.next;
+    step(4, 'Top berpindah ke next. Node lama tidak lagi dicapai dari top.');
+    step(5, 'Kembalikan data yang tadi disimpan.', { hasil: data });
     this.count--; this.weight = Math.max(0, Math.round((this.weight - data.weight) * 1e6) / 1e6); return data;
   }
   peek() { return this.top?.data ?? null; }
@@ -37,14 +53,37 @@ export function transfer(source, destination) {
 export class Queue {
   constructor() { this.front = null; this.rear = null; this.count = 0; }
   enqueue(data) {
+    const step = beginExecution(this, 'enqueue', { data });
+    step(0, 'Masuk enqueue pada satu Queue yang dipilih.');
     const node = new Node(data);
-    if (this.rear) this.rear.next = node; else this.front = node;
-    this.rear = node; this.count++; return data;
+    step(1, 'Buat node baru; node ini belum masuk ke urutan antrean.', { new_node: node });
+    step(2, this.rear ? 'rear is None bernilai False; gunakan else.' : 'rear is None bernilai True; antrean masih kosong.');
+    if (!this.rear) {
+      this.front = node;
+      step(3, 'Front menunjuk node pertama; rear masih None.');
+      this.rear = node;
+      step(4, 'Rear menunjuk node yang sama dengan front.');
+    } else {
+      step(5, 'Masuk cabang Queue yang sudah berisi.');
+      this.rear.next = node;
+      step(6, 'next milik rear lama disambungkan ke node baru.');
+      this.rear = node;
+      step(7, 'Rear dipindahkan ke node baru; front tetap.');
+    }
+    this.count++; return data;
   }
   dequeue() {
-    if (!this.front) return null;
-    const data = this.front.data; this.front = this.front.next;
-    if (!this.front) this.rear = null;
+    const step = beginExecution(this, 'dequeue');
+    step(0, 'Masuk dequeue pada jalur yang dipilih.');
+    step(1, this.front ? 'front is None bernilai False; return None dilewati.' : 'front is None bernilai True; antrean kosong.');
+    if (!this.front) { step(2, 'Kembalikan None tanpa mengubah Queue.', { hasil: null }); return null; }
+    const data = this.front.data;
+    step(3, 'Simpan data pasien paling depan.', { data });
+    this.front = this.front.next;
+    step(4, 'Front berpindah ke next; data pasien lama tetap ada pada variabel lokal.');
+    step(5, this.front ? 'Front masih ada; rear tidak perlu diubah.' : 'Front menjadi None; rear juga perlu dikosongkan.');
+    if (!this.front) { this.rear = null; step(6, 'Rear diubah menjadi None. Kedua ujung kini kosong.'); }
+    step(7, 'Kembalikan data pasien untuk diproses oleh loket.', { hasil: data });
     this.count--; return data;
   }
   peek() { return this.front?.data ?? null; }
