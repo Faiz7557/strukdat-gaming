@@ -252,3 +252,57 @@ strong,b{font-weight:500}
 .scene-legend .legend-target{background:var(--goal)}
 .svg-item.selected .box-top{stroke:var(--select-line);stroke-width:2.5}
 .drop-zone .platform-outline{stroke:var(--select-line)}
+/* ── v2 · layout satu layar ─────────────────────────── */
+@media(min-width:541px){.rail{display:none}.shell{margin-left:0}}
+.topbar{height:56px;padding:0 24px}
+.wordmark{font-size:var(--t-title);letter-spacing:-.4px}
+.room-switch button{padding:8px 16px;font-size:var(--t-label)}
+.principle{padding:6px 10px;border-radius:var(--r-hud)}.principle .icon{width:18px;height:18px}
+.principle div>span{display:inline;margin-left:6px;font-size:var(--t-meta)}
+main{padding:12px 24px 16px}
+.page-heading{margin-bottom:12px}
+.heading-line{align-items:baseline;gap:12px}
+h1{font-size:var(--t-section);letter-spacing:-.3px}
+#room-description{margin:0;font-size:var(--t-body);color:var(--muted)}
+.workspace{grid-template-columns:minmax(0,1fr) 380px;gap:16px}
+.simulation{border-radius:var(--r-card)}
+.mission{padding:12px 16px;gap:12px;align-items:center;flex-wrap:wrap}
+.mission-symbol,.scenario-note{display:none}
+.mission h2{font-size:var(--t-title)}
+#mission-description{font-size:var(--t-body);margin-top:2px}
+.mission .toolbar-actions{margin-left:auto}
+.stage{position:relative}
+.scene-wrap{height:clamp(420px,calc(100vh - 256px),720px)}
+#scene{height:100%;max-height:none;min-height:0}
+.scene-wrap .quick-actions{position:absolute;left:16px;right:16px;bottom:16px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:8px;background:#ffffffee;border:1px solid var(--line);border-radius:var(--r-hud);box-shadow:var(--shadow-1)}
+.scene-wrap .quick-actions button{min-height:44px;min-width:96px}
+.camera-controls{top:16px;bottom:auto;right:16px}
+.scene-hint{top:70px;bottom:auto;left:16px}
+.scene-footer{padding:8px 16px}
+.lens{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-bottom:16px}
+.lens>#feedback{margin:0 16px 12px;border-radius:var(--r-hud)}
+.lens .structure{padding:12px 16px;border-top:1px solid var(--line)}
+.lens .nodes{flex-wrap:wrap}
+.lens .code-panel,.lens .execution-memory{border-top:1px solid var(--line);padding:12px 16px}
+.lens .code-panel #code{max-height:220px;overflow:auto}
+.lens-controls{border-top:1px solid var(--line);padding:12px 16px}
+.lens-controls>summary{font-weight:500;cursor:pointer;min-height:44px;display:flex;align-items:center}
+@media(max-width:1050px){
+  .workspace{grid-template-columns:1fr}
+  .lens{position:static;max-height:none;display:grid;grid-template-columns:1fr 1fr}
+  .lens>.inspector-heading,.lens>#feedback,.lens-controls{grid-column:1/-1}
+  .scene-wrap{height:55vh}
+}
+@media(max-width:540px){
+  .topbar{height:auto;padding:10px 16px}.principle{display:none}
+  main{padding:8px 0 12px}.page-heading{padding:0 16px;margin-bottom:8px}
+  #room-description{display:none}
+  .simulation{border-radius:0;border-left:0;border-right:0;overflow:visible}
+  .mission{padding:10px 16px}.mission-progress{display:none}
+  .stage{position:sticky;top:0;z-index:3;background:var(--surface-1)}
+  .scene-wrap{height:48vh;min-height:300px}
+  #scene{width:100%;margin-left:0}
+  .scene-wrap .quick-actions{left:8px;right:8px;bottom:8px;gap:4px;padding:4px}
+  .scene-wrap .quick-actions button{min-width:0;flex:1;padding:6px 4px;font-size:var(--t-meta)}
+  .lens{display:block}
+}
