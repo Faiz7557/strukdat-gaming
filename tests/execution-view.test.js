@@ -185,3 +185,10 @@ test('Stack mission hints follow blockers on Rak B and name unrecoverable missin
   const other=view();other.click('start-mission');other.action({action:'pop'});
   assert.match(other.element('mission-next').textContent,/D sudah keluar.*Ulangi misi/);
 });
+
+test('Transfer explains peek, push, then pop and why the source changes last',()=>{
+  const {element,action}=view();
+  action({action:'transfer'});
+  assert.match(element('feedback').innerHTML,/peek sumber → push tujuan → pop sumber/);
+  assert.match(element('memory-context').textContent,/peek Rak A → D/);
+});

@@ -430,9 +430,9 @@ function performTransfer(source,destination,expectedId=null) {
   if(!Number.isInteger(source)||!Number.isInteger(destination)||!racks[source]||!racks[destination])throw new Error('Pilih rak sumber dan tujuan yang valid.');
   if(expectedId&&racks[source].peek()?.id!==expectedId)throw new Error('Barang tersebut sudah bukan top. Pilih barang teratas saat ini.');
   const data=transfer(racks[source],racks[destination]);selectedItem=data.id;lastObject=data.id;
-  traceExecution([{execution:racks[destination].lastExecution,context:`Pindah · 1/2 push tujuan ${rackNames[destination]}`},{execution:racks[source].lastExecution,context:`Pindah · 2/2 pop sumber ${rackNames[source]}`}]);
+  traceExecution([{execution:racks[destination].lastExecution,context:`Pindah · peek ${rackNames[source]} → ${data.id}, lalu 1/2 push tujuan ${rackNames[destination]}`},{execution:racks[source].lastExecution,context:`Pindah · 2/2 pop sumber ${rackNames[source]}`}]);
   if(missions.stack.active&&racks[0].peek()?.id==='B')missions.stack.cleared=true;
-  notify(`${data.id}: ${rackNames[source]} → ${rackNames[destination]}. Push ke tujuan dan pop dari sumber berhasil.`,false,'pindah()');rack=destination;
+  notify(`${data.id}: ${rackNames[source]} → ${rackNames[destination]}. Urutan: peek sumber → push tujuan → pop sumber. Sumber diubah terakhir agar tetap utuh bila tujuan penuh.`,false,'pindah()');rack=destination;
 }
 function endDrag() {
   if(!drag)return;
