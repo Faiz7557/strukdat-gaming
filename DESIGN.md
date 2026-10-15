@@ -193,7 +193,7 @@ Topbar setinggi 56px memuat wordmark, tab ruang, progres level, dan prinsip LIFO
 
 Urutan belajar di desktop: tujuan misi, stage arena, Lensa di kolom kanan, lalu Bedah Eksekusi. Stage memakai tinggi `clamp(420px, 100vh - 256px, 720px)` sehingga arena dan dock aksi (`#quick-actions`) terlihat dalam satu layar. Dock berada di dalam stage pada bagian bawah. Lensa (`.inspector.lens`) memuat struktur, kode, dan kontrol lanjutan; lebarnya 380px dan turun menjadi satu kolom pada 1050px atau kurang.
 
-Pengukuran 1440×900: arena dimulai pada Y=253, dock pada Y=820, dan kode di Lensa pada Y=691. Pengukuran 390×844: arena dimulai pada Y=289, dan teks SVG terkecil 12px.
+Pengukuran 1440×900: arena dimulai pada Y=271 (Y=379 saat level aktif), dock tetap pada Y=759, dan kode di Lensa pada Y=694. Pengukuran 390×844: arena dimulai pada Y=315, dock pada Y=641, dan teks SVG terkecil 12px. Di desktop arena mengisi sisa tinggi viewport; chip level berada di baris judul ruang; prediksi tampil sebagai overlay di atas dock.
 
 Pada 540px atau kurang, navigasi menjadi bilah bawah 68px ditambah safe area. Shell memakai lebar penuh dan menyisakan ruang bawah untuk navigasi. Inset halaman 16px; field 16px dengan tinggi 44px. Pada ponsel, baris metadata rak di SVG disembunyikan (`compact-labels`); jumlah tetap tampil di HUD dan Lensa. Diagram node dan kode bergulir di dalam panelnya tanpa memperlebar halaman.
 

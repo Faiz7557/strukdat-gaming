@@ -400,8 +400,10 @@ Status ini mengikuti branch `uiux-overhaul`. Pemetaan task mengikuti lampiran re
 
 Angka berikut berasal dari pengukuran yang sudah tercatat di audit ini; tidak diukur ulang pada task ini.
 
-- Desktop 1440×900: arena dimulai pada Y=253, dock aksi pada Y=820, dan kode di Lensa pada Y=691.
-- Ponsel 390×844: arena dimulai pada Y=289, dan teks SVG terkecil 12px.
+- Desktop 1440×900: arena dimulai pada Y=271 (Y=379 saat level aktif), dock aksi tetap pada Y=759, dan kode di Lensa pada Y=694.
+- Desktop 1280×800: dock pada Y=659 (Y=679 saat level aktif) dan kode pada Y=694; semuanya di atas lipatan.
+- Ponsel 390×844: arena dimulai pada Y=315 dan dock pada Y=641 di kedua ruang; teks SVG terkecil 12px.
+- Perbaikan setelah Task 12: strip misi membengkak (215–413px) setelah level ditambahkan. Di desktop, `.simulation` kini kolom flex setinggi viewport sehingga arena mengisi sisa ruang; chip level dipindah ke baris judul; prediksi menjadi overlay dekat dock; di ponsel judul ruang hanya disembunyikan secara visual (nav bawah menandai ruang aktif).
 
 ### 20.6 Belum diverifikasi
 

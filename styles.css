@@ -328,3 +328,20 @@ h1{font-size:var(--t-section);letter-spacing:-.3px}
 .level-summary .incorrect{border-color:var(--danger);color:var(--danger)}
 .explain-why{color:var(--ink);margin:6px 0 10px}
 @media(max-width:540px){.level-summary{left:8px;right:8px;bottom:64px;max-width:none}}
+/* ── v2 · desktop: arena mengisi sisa tinggi viewport, apa pun tinggi strip misi ── */
+@media(min-width:1051px){
+  .simulation{display:flex;flex-direction:column;height:calc(100vh - 146px);min-height:640px}
+  .stage{flex:1;min-height:420px}.stage .scene-wrap{height:100%}
+  .mission-copy{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+  .mission-copy>*{flex-basis:100%}
+  .mission-copy>#mission-progress,.mission-copy>#level-select,.mission-copy>#mission-hint{flex-basis:auto}
+  .level-select{margin-top:0}
+}
+/* ── v2 · chip level di baris judul, prediksi sebagai overlay dekat dock ── */
+.heading-line .level-select{margin:0}
+.scene-wrap #mission-predict:not(:empty){position:absolute;right:16px;bottom:84px;z-index:4;max-width:360px;background:#fff;border:1px solid var(--line-strong);border-radius:var(--r-hud);box-shadow:var(--shadow-1);padding:10px 12px}
+.scene-wrap #mission-predict .prediction{margin:0;padding:0;border:0;background:none}
+@media(max-width:540px){.heading-line{flex-wrap:wrap}.scene-wrap #mission-predict:not(:empty){left:8px;right:8px;bottom:64px;max-width:none}}
+/* Ponsel: ruang aktif sudah ditandai nav bawah; judul tetap ada untuk pembaca layar. */
+@media(max-width:540px){.heading-line h1,.heading-line .practicum-tag{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}}
+@media(max-width:540px){.page-heading{margin-bottom:4px}.mission{padding:8px 16px}}
