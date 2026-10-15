@@ -139,22 +139,22 @@ test('Predictions follow current top and next patient; wrong answers allow anoth
   const {element,context,click,action}=view();
   click('start-mission');
   action({predict:'A'});
-  assert.match(element('controls').innerHTML,/Belum tepat/);
-  assert.match(element('controls').innerHTML,/data-predict="D"/);
+  assert.match(element('mission-predict').innerHTML,/Belum tepat/);
+  assert.match(element('mission-predict').innerHTML,/data-predict="D"/);
   action({predict:'D'});
-  assert.match(element('controls').innerHTML,/Benar. D berada pada top/);
+  assert.match(element('mission-predict').innerHTML,/Benar. D berada pada top/);
   action({action:'pop'});
-  assert.doesNotMatch(element('controls').innerHTML,/Benar. D berada pada top/);
+  assert.doesNotMatch(element('mission-predict').innerHTML,/Benar. D berada pada top/);
   action({predict:'D'});
-  assert.match(element('controls').innerHTML,/Belum tepat/);
+  assert.match(element('mission-predict').innerHTML,/Belum tepat/);
   action({predict:'C'});
-  assert.match(element('controls').innerHTML,/Benar. C berada pada top/);
+  assert.match(element('mission-predict').innerHTML,/Benar. C berada pada top/);
   vm.runInContext("room='queue';queueMode='priority';missions.queue={active:true};seedQueue(true);clinic.register({id:'P04',name:'Dina',priority:'kritis'});render();",context);
-  action({predict:'P04'});assert.match(element('controls').innerHTML,/Benar. P04 berada pada front/);
-  action({action:'call'});assert.doesNotMatch(element('controls').innerHTML,/data-predict=/);
+  action({predict:'P04'});assert.match(element('mission-predict').innerHTML,/Benar. P04 berada pada front/);
+  action({action:'call'});assert.doesNotMatch(element('mission-predict').innerHTML,/data-predict=/);
   action({action:'next-event'});
-  action({predict:'P04'});assert.match(element('controls').innerHTML,/Belum tepat/);
-  action({predict:'P02'});assert.match(element('controls').innerHTML,/Benar. P02 berada pada front/);
+  action({predict:'P04'});assert.match(element('mission-predict').innerHTML,/Belum tepat/);
+  action({predict:'P02'});assert.match(element('mission-predict').innerHTML,/Benar. P02 berada pada front/);
 });
 
 test('Reset, mode switch, and mission replacement preserve work when cancelled',()=>{
@@ -178,7 +178,7 @@ test('Reset, mode switch, and mission replacement preserve work when cancelled',
 
 test('Stack mission hints follow blockers on Rak B and name unrecoverable missing items',()=>{
   const {context,element,click,action}=view();
-  click('start-mission');element('destination').value='1';action({action:'transfer'});
+  click('start-mission');vm.runInContext('missions.stack.hintLevel=3',context);element('destination').value='1';action({action:'transfer'});
   action({rack:'0'});element('destination').value='1';action({action:'transfer'});
   action({rack:'0'});action({action:'pop'});
   assert.match(element('mission-next').textContent,/C dari Rak B ke Rak A/);
@@ -189,6 +189,21 @@ test('Stack mission hints follow blockers on Rak B and name unrecoverable missin
   assert.equal(vm.runInContext('completedMissions.has("stack")',context),true);
   const other=view();other.click('start-mission');other.action({action:'pop'});
   assert.match(other.element('mission-next').textContent,/D sudah keluar.*Ulangi misi/);
+});
+
+test('Hints reveal concept, then direction, then the exact step; recovery is always visible',()=>{
+  const {context,element,click,action}=view();
+  click('start-mission');
+  assert.equal(element('mission-next').textContent,'');
+  action({hint:'true'});
+  assert.match(element('mission-next').textContent,/Hanya barang top/);
+  action({hint:'true'});
+  assert.match(element('mission-next').textContent,/Ada 2 barang di atas B/);
+  action({hint:'true'});
+  assert.match(element('mission-next').textContent,/Pindahkan D dari Rak A ke Bantuan/);
+  assert.equal(vm.runInContext('missions.stack.hintLevel',context),3);
+  const other=view();other.click('start-mission');other.action({action:'pop'});
+  assert.match(other.element('mission-next').textContent,/D sudah keluar.*Ulangi misi/,'recovery without asking');
 });
 
 test('Keyboard users still see explanatory arena motion; only reduced motion disables it',()=>{

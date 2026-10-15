@@ -286,7 +286,7 @@ function renderStackControls() {
   const capacityOpen=$('controls').querySelector('.capacity-settings')?.open;
   $('controls').innerHTML=`<section class="control-section"><div class="control-title">Rak penyimpanan <span>top: ${escape(s.peek()?.id??'None')}</span></div><div class="rack-tabs">${rackNames.map((n,i)=>`<button data-rack="${i}" class="${rack===i?'active':''}">${n}</button>`).join('')}</div><div class="capacity"><span>${s.count} / ${s.maxItems} barang</span><span>${s.weight} / ${s.maxWeight} kg</span></div><div class="capacity-track"><span style="width:100%;transform:scaleX(${Math.max(s.count/s.maxItems,s.weight/s.maxWeight)})"></span></div><details class="capacity-settings" ${capacityOpen?'open':''}><summary>Ubah batas kapasitas</summary><form id="capacity-form"><div class="form-grid">${field('Maks. barang','max-items',s.maxItems,'number',false,'min="1" max="12" required')}${field('Maks. berat (kg)','max-weight',s.maxWeight,'number',false,'min="0.1" max="1000" step="0.1" required')}</div><button class="secondary" style="margin-top:8px">Simpan batas</button></form></details></section>
   <section class="control-section"><div class="control-title">Barang baru</div><form id="push-form"><div class="form-grid">${field('ID barang','item-id',`G${String(serial).padStart(2,'0')}`,'text',false,'maxlength="12" required')}${field('Berat (kg)','item-weight','3','number',false,'min="0.1" max="1000" step="0.1" required')}${field('Nama barang','item-name','Modul cadangan','text',true,'maxlength="50" required')}<label class="field full">Kategori<select id="item-category"><option>Elektronik</option><option>Peralatan</option><option>Dokumen</option><option>Lainnya</option></select></label></div><button class="primary" type="submit">${icon('plus')}Simpan barang <span>/ push</span></button></form><div class="operation-row"><button class="secondary" data-action="pop">${icon('up')}Ambil / pop</button><button class="secondary" data-action="peek">${icon('eye')}Lihat / peek</button></div><button class="text-button" data-action="empty" style="margin-top:9px">Periksa isEmpty()</button></section>
-  <section class="control-section"><div class="control-title">Pindahkan barang teratas</div><div class="transfer-row"><select id="destination" aria-label="Rak tujuan">${rackNames.map((n,i)=>i===rack?'':`<option value="${i}" ${i===2?'selected':''}>${n}</option>`).join('')}</select><button class="secondary" data-action="transfer">Pindahkan</button></div>${chosen?`<div class="selection-detail"><strong>${escape(chosen.id)} · ${escape(chosen.name)}</strong><span>${chosen.weight} kg · ${escape(chosen.category)}</span><span>${s.peek()?.id===chosen.id?'Teratas: dapat diambil langsung.':`Tertimbun: ${s.values().findIndex(p=>p.id===chosen.id)} barang penghalang.`}</span></div>`:''}<form id="find-form" class="transfer-row"><input id="search-item" aria-label="Cari barang berdasarkan ID" placeholder="Cari ID barang…" maxlength="12" style="width:100%;min-width:0;border:1px solid var(--line);border-radius:5px;padding:8px;font-size:11px"><button class="secondary">Cari</button></form>${predictionHTML()}</section>`;
+  <section class="control-section"><div class="control-title">Pindahkan barang teratas</div><div class="transfer-row"><select id="destination" aria-label="Rak tujuan">${rackNames.map((n,i)=>i===rack?'':`<option value="${i}" ${i===2?'selected':''}>${n}</option>`).join('')}</select><button class="secondary" data-action="transfer">Pindahkan</button></div>${chosen?`<div class="selection-detail"><strong>${escape(chosen.id)} · ${escape(chosen.name)}</strong><span>${chosen.weight} kg · ${escape(chosen.category)}</span><span>${s.peek()?.id===chosen.id?'Teratas: dapat diambil langsung.':`Tertimbun: ${s.values().findIndex(p=>p.id===chosen.id)} barang penghalang.`}</span></div>`:''}<form id="find-form" class="transfer-row"><input id="search-item" aria-label="Cari barang berdasarkan ID" placeholder="Cari ID barang…" maxlength="12" style="width:100%;min-width:0;border:1px solid var(--line);border-radius:5px;padding:8px;font-size:11px"><button class="secondary">Cari</button></form></section>`;
 }
 function predictionState() {
   if (!missions[room].active || missions[room].wasComplete || room==='queue' && clinic.active) return null;
@@ -303,7 +303,7 @@ function renderQueueControls() {
   const all=clinic.queues.flatMap(q=>q.values()), chosen=all.find(p=>p.id===selectedPatient);
   $('controls').innerHTML=`<section class="control-section"><div class="control-title">Mode antrean <span class="clock-label">${clock()}</span></div><div class="rack-tabs queue-mode"><button data-mode="fifo" class="${queueMode==='fifo'?'active':''}">FIFO dasar</button><button data-mode="priority" class="${queueMode==='priority'?'active':''}">Tiga prioritas</button></div><div class="report"><div><strong>${clinic.served}</strong><span>Dilayani</span></div><div><strong>${clinic.cancelled}</strong><span>Dibatalkan</span></div><div><strong>${clinic.waiting()}</strong><span>Menunggu</span></div></div><div class="service-status">${clinic.active?`Melayani ${escape(clinic.active.patient.id)} · ${escape(clinic.active.patient.name)}<span>Selesai ${clock(clinic.active.endsAt)} · sisa ${Math.max(0,clinic.active.endsAt-clinic.time)} menit</span>`:'Loket tersedia<span>Durasi pelayanan: 5 menit per pasien.</span>'}</div><div class="operation-row"><button class="secondary" data-action="advance">${icon('plus')}1 menit</button><button class="secondary" data-action="next-event">Kejadian berikut</button></div><button class="primary" data-action="call" ${clinic.active?'disabled':''}>${icon('arrow')}Panggil berikutnya / dequeue</button><p class="service-next">Berikutnya dilayani: <strong>${escape(nextServedId())}</strong></p><div class="operation-row"><button class="secondary" data-action="peek">${icon('eye')}peek() ${queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}</button><button class="secondary" data-action="empty">isEmpty() ${queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}</button></div></section>
   <section class="control-section"><div class="control-title">Registrasi pasien</div><form id="register-form"><div class="form-grid">${field('ID pasien','patient-id',`P${String(patientSerial).padStart(2,'0')}`,'text',false,'maxlength="12" required')}${field('Nama pasien','patient-name',missions.queue.active?'Dina':'Fajar','text',false,'maxlength="50" required')}<label class="field full">Tingkat kegawatan<select id="patient-priority" ${queueMode==='fifo'?'disabled':''}>${priorities.map((p,i)=>`<option value="${p}" ${queueMode==='fifo'?i===2?'selected':'':i===0?'selected':''}>${priorityNames[i]}</option>`).join('')}</select></label></div><button class="primary">${icon('plus')}Daftarkan / enqueue</button></form></section>
-  <section class="control-section"><div class="control-title">Pasien dalam antrean <span>${queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}</span></div><div class="patient-list">${all.length?all.map(p=>`<button data-patient="${escape(p.id)}" data-queue="${priorities.indexOf(p.priority)}" class="${selectedPatient===p.id?'selected':''}" aria-pressed="${selectedPatient===p.id}"><strong>${escape(p.id)} · ${escape(p.name)}</strong><span>±${clinic.estimate(p.id)} mnt</span></button>`).join(''):'<p class="structure-note">Belum ada pasien. Gunakan registrasi di atas.</p>'}</div>${chosen?`<div class="selection-detail"><strong>${escape(chosen.id)} · ${escape(chosen.name)}</strong><span>Datang ${clock(chosen.arrival)} · ${priorityNames[priorities.indexOf(chosen.priority)]}</span><span>Estimasi tunggu: ${clinic.estimate(chosen.id)} menit.</span><span>Berdasarkan antrean saat ini.</span></div><button class="secondary danger-button" data-action="cancel" style="width:100%;margin-top:8px">Batalkan antrean ${escape(chosen.id)}</button>`:''}${predictionHTML()}</section>`;
+  <section class="control-section"><div class="control-title">Pasien dalam antrean <span>${queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}</span></div><div class="patient-list">${all.length?all.map(p=>`<button data-patient="${escape(p.id)}" data-queue="${priorities.indexOf(p.priority)}" class="${selectedPatient===p.id?'selected':''}" aria-pressed="${selectedPatient===p.id}"><strong>${escape(p.id)} · ${escape(p.name)}</strong><span>±${clinic.estimate(p.id)} mnt</span></button>`).join(''):'<p class="structure-note">Belum ada pasien. Gunakan registrasi di atas.</p>'}</div>${chosen?`<div class="selection-detail"><strong>${escape(chosen.id)} · ${escape(chosen.name)}</strong><span>Datang ${clock(chosen.arrival)} · ${priorityNames[priorities.indexOf(chosen.priority)]}</span><span>Estimasi tunggu: ${clinic.estimate(chosen.id)} menit.</span><span>Berdasarkan antrean saat ini.</span></div><button class="secondary danger-button" data-action="cancel" style="width:100%;margin-top:8px">Batalkan antrean ${escape(chosen.id)}</button>`:''}</section>`;
 }
 function renderNodes() {
   const values=room==='stack'?racks[rack].values():clinic.queues[selectedQueue].values();
@@ -311,6 +311,29 @@ function renderNodes() {
   $('structure-label').textContent=`Linked-list · ${room==='stack'?rackNames[rack]:queueMode==='fifo'?'FIFO':priorityNames[selectedQueue]}`;
   $('nodes').innerHTML=values.length?values.map((p,i)=>`<div data-node="${escape(p.id)}" class="node ${p.id===(room==='stack'?selectedItem:selectedPatient)?'selected':''}">${i===0||room==='queue'&&i===values.length-1?`<span class="pointer-label">${i===0?first:''}${room==='queue'&&i===values.length-1?i===0?' / rear':'rear':''} ↓</span>`:''}<span class="node-data">${escape(p.id)}</span><span class="node-next">next</span></div><span class="arrow">→</span>`).join('')+'<span class="null">None</span>':`<span class="null">${first} → None${room==='queue'?' &nbsp; · &nbsp; rear → None':''}</span>`;
   $('structure-note').textContent=room==='stack'?'Panah next bergerak dari top menuju dasar rak. push/pop: O(1). Cari ID: O(n) karena menelusuri node.':'Panah next bergerak dari front ke rear. enqueue/dequeue: O(1). Batalkan pasien: O(n) karena mencari node.';
+}
+function missionHint() {
+  const m=missions[room];
+  if(room==='stack'){
+    const location=id=>racks.findIndex(s=>s.values().some(p=>p.id===id));
+    const missing=['A','C','D',...(!m.removed?['B']:[])].find(id=>location(id)<0);
+    if(missing)return {recovery:true,step:`${missing} sudah keluar dari arena. Ulangi misi untuk memulihkan skenario.`};
+    const concept='Hanya barang top yang bisa diambil. Barang di atas target harus dipindah dulu, lalu dikembalikan dengan urutan terbalik.';
+    if(!m.removed){
+      const source=location('B'),blockers=racks[source].values().findIndex(p=>p.id==='B');
+      return {concept,direction:blockers?`Ada ${blockers} barang di atas B pada ${rackNames[source]}.`:`B sudah menjadi top ${rackNames[source]}.`,
+        step:racks[source].peek()?.id==='B'?`Ambil B dari ${rackNames[source]}.`:`Pindahkan ${racks[source].peek().id} dari ${rackNames[source]} ke ${source===2?'Rak B':'Bantuan'}.`};
+    }
+    const target=['D','C','A'].findLast(id=>location(id)!==0);
+    if(!target)return {recovery:true,step:'Urutan Rak A belum tepat. Ulangi misi dan kembalikan C sebelum D.'};
+    const source=location(target),top=racks[source].peek().id;
+    return {concept,direction:`Rak A harus kembali top → D → C → A; ${target} belum di Rak A.`,
+      step:top===target?`Kembalikan ${target} dari ${rackNames[source]} ke Rak A.`:`Pindahkan ${top} dari ${rackNames[source]} ke ${source===2?'Rak B':'Bantuan'} agar ${target} dapat diambil.`};
+  }
+  const concept='Pemanggilan selalu mengambil front dari jalur prioritas tertinggi yang berisi. Di dalam satu jalur berlaku FIFO.';
+  const step=!m.critical?'Daftarkan P04 dengan tingkat kritis.':!m.servedCritical?(clinic.active?'Majukan ke kejadian berikut untuk menyelesaikan pelayanan.':'Panggil P04 dari jalur kritis.'):!m.fifo?'Panggil P02; P03 datang setelahnya.':'Pilih P01 lalu batalkan antreannya.';
+  const direction=!m.critical?'Belum ada pasien kritis di antrean.':!m.servedCritical?'P04 harus selesai dilayani sebelum pasien lain.':!m.fifo?'P02 dan P03 sama-sama darurat; siapa yang datang lebih dulu?':'Satu pasien non-darurat perlu dibatalkan.';
+  return {concept,direction,step};
 }
 function renderMission() {
   const m=missions[room]; let complete=false, stages;
@@ -333,23 +356,13 @@ function renderMission() {
   $('mission-progress').innerHTML=stages.map(([name,done],i)=>`<span class="${done?'done':m.active&&i===next?'current':''}">${done?icon('check'):`${i+1}.`} ${name}</span>`).join('');
   let hint='';
   if(m.active&&!complete){
-    if(room==='stack'){
-    const location=id=>racks.findIndex(s=>s.values().some(p=>p.id===id));
-    const missing=['A','C','D',...(!m.removed?['B']:[])].find(id=>location(id)<0);
-    if(missing) hint=`${missing} sudah keluar dari arena. Ulangi misi untuk memulihkan skenario.`;
-    else if(!m.removed){
-      const source=location('B');
-      hint=racks[source].peek()?.id==='B'?`Ambil B dari ${rackNames[source]}.`:`Pindahkan ${racks[source].peek().id} dari ${rackNames[source]} ke ${source===2?'Rak B':'Bantuan'}.`;
-    }else{
-      const expected=['D','C','A'], target=expected.findLast(id=>location(id)!==0);
-      if(target){
-        const source=location(target),top=racks[source].peek().id;
-        hint=top===target?`Kembalikan ${target} dari ${rackNames[source]} ke Rak A.`:`Pindahkan ${top} dari ${rackNames[source]} ke ${source===2?'Rak B':'Bantuan'} agar ${target} dapat diambil.`;
-      }else hint='Urutan Rak A belum tepat. Ulangi misi dan kembalikan C sebelum D.';
-    }
-    }else hint=!m.critical?'Daftarkan P04 dengan tingkat kritis.':!m.servedCritical?(clinic.active?'Majukan ke kejadian berikut untuk menyelesaikan pelayanan.':'Panggil P04 dari jalur kritis.') :!m.fifo?'Panggil P02; P03 datang setelahnya.':'Pilih P01 lalu batalkan antreannya.';
+    const h=missionHint(),level=m.hintLevel??0;
+    hint=h.recovery?h.step:level>=3?`Langkah berikut: ${h.step}`:level===2?h.direction:level===1?h.concept:'';
   }
-  $('mission-next').textContent=hint?`Langkah berikut: ${hint}`:'';
+  $('mission-next').textContent=hint;
+  $('mission-hint').hidden=!m.active||complete||(m.hintLevel??0)>=3;
+  $('mission-hint').textContent=`Petunjuk (${(m.hintLevel??0)+1}/3)`;
+  $('mission-predict').innerHTML=predictionHTML();
   if(complete&&!m.wasComplete){
     completedMissions.add(room);clearTimeout(achievementTimer);
     $('achievement').innerHTML=`${icon('check')}<div><strong>Misi selesai.</strong><small>${room==='stack'?'B diambil. Rak A pulih: top → D → C → A.':'P04 selesai. P02 dipanggil sebelum P03.'}</small></div>`;
@@ -554,8 +567,9 @@ document.addEventListener('click',event=>{
   if(tap&&(tap.dataset.quickPush||tap.dataset.quickRegister)){run(()=>tap.dataset.quickPush?pushItem(nextSupply()):registerPatient({id:missions.queue.supply?.shift()??`P${String(patientSerial).padStart(2,'0')}`,name:patientNames[patientSerial%patientNames.length],priority:priorities[selectedQueue]}));return;}
   const quick=event.target.closest('[data-quick]');
   if(quick){document.querySelector(`#controls [data-action="${quick.dataset.quick}"]`)?.click();return;}
-  const button=event.target.closest('[data-room],[data-item],[data-patient],[data-rack],[data-queue],[data-action],[data-mode],[data-predict],[data-warmup-answer],[data-warmup-next],[data-warmup-reset]');
+  const button=event.target.closest('[data-room],[data-item],[data-patient],[data-rack],[data-queue],[data-action],[data-mode],[data-predict],[data-hint],[data-warmup-answer],[data-warmup-next],[data-warmup-reset]');
   if(!button)return;
+  if(button.dataset.hint){const m=missions[room];m.hintLevel=Math.min(3,(m.hintLevel??0)+1);renderMission();return;}
   if(button.dataset.warmupAnswer){answerWarmup(button.dataset.warmupAnswer);return;}
   if(button.dataset.warmupNext){
     const state=warmups[room];if(!state.answered||state.step>=warmupQuestions[room].length-1)return;
@@ -572,6 +586,7 @@ document.addEventListener('click',event=>{
   if(button.dataset.predict) {
     const state=predictionState();if(!state)return;
     const correct=button.dataset.predict===state.expected;
+    if(!correct)missions[room].wrongPredictions=(missions[room].wrongPredictions??0)+1;
     missions[room].prediction={key:state.key,correct,text:correct?`Benar. ${state.expected} ${room==='stack'?'berada pada top; pop mengambil node ini.':queueMode==='fifo'?'berada pada front; pasien ini masuk lebih dulu.':'berada pada front jalur berprioritas tertinggi yang terisi.'}`:room==='stack'?'Belum tepat. Ikuti penanda top pada rak yang dipilih, lalu coba lagi.':'Belum tepat. Periksa prioritas jalur dan penanda front, lalu coba lagi.'};render();return;
   }
   if(button.dataset.patient){selectedPatient=button.dataset.patient;selectedQueue=Number(button.dataset.queue);render();return;}
@@ -655,7 +670,7 @@ document.addEventListener('submit',event=>{
 });
 $('start-mission').addEventListener('click',()=>replaceExperiment('Memulai atau mengulang misi akan mengganti isi ruang ini dengan skenario misi. Eksperimen saat ini akan hilang.',()=>{
   endDrag();stopTrace();trace=null;lastResult=null;drafts[room]={};clearTimeout(achievementTimer);$('achievement').hidden=true;
-  if(room==='stack'){missions.stack={active:true,removed:false,cleared:false};seedStack(true);}else{queueMode='priority';missions.queue={active:true,critical:false,servedCritical:false,fifo:false,cancelled:false};seedQueue(true);}
+  if(room==='stack'){missions.stack={active:true,removed:false,cleared:false,hintLevel:0,wrongPredictions:0};seedStack(true);}else{queueMode='priority';missions.queue={active:true,critical:false,servedCritical:false,fifo:false,cancelled:false,hintLevel:0,wrongPredictions:0};seedQueue(true);}
   notify(room==='stack'?'Misi dimulai. Cari B, pindahkan D lalu C ke Bantuan, kemudian ambil B.':'Misi dimulai. Daftarkan P04 sebagai kritis melalui registrasi.',false,'misi()');render();
 }));
 $('reset').addEventListener('click',()=>replaceExperiment('Atur ulang akan mengganti isi ruang ini dengan data contoh dan mengakhiri misi yang berjalan.',()=>{endDrag();stopTrace();trace=null;lastResult=null;drafts[room]={};camera.zoom=defaultZoom();camera.focus=camera.zoom>1;clearTimeout(achievementTimer);$('achievement').hidden=true;missions[room]={active:false};if(room==='stack')seedStack();else seedQueue();edited[room]=false;notify('Ruang diatur ulang. Data contoh siap digunakan.',false,'reset()');render();}));
