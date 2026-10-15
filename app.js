@@ -452,7 +452,7 @@ function render() {
     const zone=focused.closest('#scene')?'#scene ':focused.closest('#controls')?'#controls ':'';
     const attribute=['data-item','data-patient','data-action','data-quick','data-rack','data-queue','data-mode','data-room','data-predict'].find(a=>focused.hasAttribute(a));
     if(attribute)focusSelector=`${zone}[${attribute}="${CSS.escape(focused.getAttribute(attribute))}"]`;
-    else if(focused.closest('form'))focusSelector=`#${focused.closest('form').id} button`;
+    else if(focused.closest('form')?.id)focusSelector=`#${focused.closest('form').id} button`;
   }
   const oldPositions=new Map(),sameRoom=drawnRoom===room,oldTransform=sameRoom&&$('world')?getComputedStyle($('world')).transform:null;
   if(sameRoom&&motionAllowed())document.querySelectorAll('#world [data-entity]').forEach(el=>oldPositions.set(el.dataset.entity,{bounds:el.getBoundingClientRect(),clone:cleanGhost(el)}));
