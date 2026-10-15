@@ -218,3 +218,13 @@ test('Transfer explains peek, push, then pop and why the source changes last',()
   assert.match(element('feedback').innerHTML,/peek sumber → push tujuan → pop sumber/);
   assert.match(element('memory-context').textContent,/peek Rak A → D/);
 });
+
+test('Each trace frame names the arena objects it points at',()=>{
+  const {context,element,listeners}=view();
+  element('item-id').value='G07';element('item-name').value='Modul';element('item-weight').value='3';element('item-category').value='Elektronik';
+  listeners.get('document:submit')({target:{id:'push-form'},preventDefault(){}});
+  const ids=vm.runInContext('trace.steps.map(i=>JSON.stringify(traceFocusIds(trace.records[i].frame)))',context).map(json=>JSON.parse(json));
+  assert.deepEqual(ids[0],['D'],'before node creation only top (D) is referenced');
+  assert.ok(ids[1].includes('G07'),'new_node is highlighted once created');
+  assert.deepEqual(ids.at(-1),['G07'],'top ends on the pushed item');
+});
