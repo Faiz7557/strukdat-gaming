@@ -211,3 +211,10 @@ test('Order text always names its reading direction and complexity notes stay ab
   assert.match(element('mission-description').textContent,/top → D → C → A/);
   assert.doesNotMatch(element('mission-description').textContent,/A–C–D/);
 });
+
+test('Transfer explains peek, push, then pop and why the source changes last',()=>{
+  const {element,action}=view();
+  action({action:'transfer'});
+  assert.match(element('feedback').innerHTML,/peek sumber → push tujuan → pop sumber/);
+  assert.match(element('memory-context').textContent,/peek Rak A → D/);
+});
