@@ -1,0 +1,11 @@
+.git
+.claude
+.impeccable
+node_modules
+screenshots
+tests
+docs
+*.md
+Dockerfile
+docker-compose.yml
+deploy

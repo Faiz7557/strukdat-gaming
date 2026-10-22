@@ -5,7 +5,7 @@
   <meta name="theme-color" content="#F4F5F9"><meta name="description" content="Strukdat Gaming: arena belajar interaktif Stack dan Queue untuk Praktikum 6 dan 7.">
   <title>Strukdat Gaming</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%232F39A9'/%3E%3Cpath d='M10 15l10-6 10 6v12l-10 6-10-6zm0 0l10 6 10-6M20 21v12' fill='none' stroke='%2315D8B3' stroke-width='2'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css"><script type="module" src="app.js"></script>
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="quiz.css"><script type="module" src="app.js"></script>
 </head>
 <body>
   <svg class="icon-defs" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
@@ -40,6 +40,7 @@
     </header>
     <main id="main">
       <div class="page-heading"><div class="heading-line"><h1 id="room-title">Gudang Stack</h1><span id="practicum" class="practicum-tag">Praktikum 6</span><div id="level-select" class="level-select" role="group" aria-label="Pilih level"></div><p id="room-description">Simpan, pindahkan, dan temukan barang. Pahami apa yang terjadi di balik setiap operasi.</p></div></div>
+      <section id="queue-quiz" class="queue-live-entry" aria-labelledby="queue-quiz-title" hidden><div><h2 id="queue-quiz-title">Queue Live · kuis bersama kelas</h2><p>20 soal, ronde serentak, bonus kecepatan, dan leaderboard. Buat ruang sebagai host atau gabung dengan kode.</p></div><a class="primary" href="quiz.html" target="_blank" rel="noopener">Buka kuis bersama ↗</a></section>
       <div class="workspace">
         <section class="simulation" id="simulation" aria-label="Dunia simulasi" tabindex="-1">
           <section class="mission" aria-labelledby="mission-title"><div class="mission-symbol"><svg class="icon"><use href="#i-flag"/></svg></div><div class="mission-copy"><div class="mission-header"><h2 id="mission-title">Misi: ambil barang B</h2><span id="mission-status" class="small-badge">Siap dicoba</span><span id="scene-summary">3 rak penyimpanan</span></div><p id="mission-description">Pindahkan penghalang ke rak bantuan, ambil B, lalu kembalikan urutan barang.</p><p class="scenario-note">Mulai misi mengganti isi ruang ini dengan skenario latihan.</p><div class="mission-progress" id="mission-progress"></div><div id="plan-panel" class="plan-panel" hidden></div><p id="mission-next" class="mission-next"></p>

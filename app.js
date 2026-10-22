@@ -458,6 +458,7 @@ function render() {
   if(sameRoom&&motionAllowed())document.querySelectorAll('#world [data-entity]').forEach(el=>oldPositions.set(el.dataset.entity,{bounds:el.getBoundingClientRect(),clone:cleanGhost(el)}));
   document.querySelectorAll('[data-room]').forEach(b=>{b.classList.toggle('active',b.dataset.room===room);b.setAttribute('aria-pressed',String(b.dataset.room===room));});
   $('practicum').textContent=room==='stack'?'Praktikum 6':'Praktikum 7';
+  $('queue-quiz').hidden=room!=='queue';
   $('room-title').textContent=room==='stack'?'Gudang Stack':'Antrean Queue';
   $('room-description').textContent=room==='stack'?'Simpan, pindahkan, dan temukan barang. Pahami apa yang terjadi di balik setiap operasi.':'Atur kedatangan dan pelayanan pasien. Temukan hubungan antara prioritas, FIFO, dan waktu tunggu.';
   $('principle').innerHTML=`${icon(room==='stack'?'up':'arrow')}<div><strong>${room==='stack'?'LIFO':'FIFO'}</strong><span>${room==='stack'?'Terakhir masuk, pertama keluar':queueMode==='fifo'?'Pertama masuk, pertama keluar':'FIFO di setiap tingkat prioritas'}</span></div>`;

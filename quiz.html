@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#F4F5F9"><meta name="description" content="Kuis Queue bersama: 20 soal, ronde serentak, pembahasan, dan leaderboard kelas.">
+  <title>Queue Live · Strukdat Gaming</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="quiz.css">
+  <script type="module" src="quiz-client.js"></script>
+</head>
+<body class="quiz-page">
+  <a class="skip" href="#quiz-main">Langsung ke kuis</a>
+  <header class="quiz-topbar"><a href="./" class="wordmark">Strukdat <span>Gaming</span></a><span class="small-badge">QUEUE LIVE</span><a class="text-button" href="./">← Laboratorium</a></header>
+  <main id="quiz-main">
+    <div id="quiz-notice" class="quiz-notice" role="status" aria-live="polite" tabindex="-1" hidden></div>
+    <section id="quiz-entry" aria-labelledby="entry-title">
+      <button id="resume-session" class="secondary" hidden>Kembali ke sesi aktif</button>
+      <div class="quiz-intro"><span class="quiz-eyebrow">PRAKTIKUM 7 · BERMAIN BERSAMA</span><h1 id="entry-title">Satu antrean.<br>Satu kelas. Siapa paling paham?</h1><p>Uji pemahaman Queue dalam 20 soal. Jawab tepat, kumpulkan bonus kecepatan, dan bahas setiap ronde bersama.</p><div class="quiz-facts"><span>20 soal Queue</span><span>25–45 detik / soal</span><span>Hingga 60 peserta / ruang</span></div></div>
+      <div class="quiz-entry-grid">
+        <section class="quiz-card"><span class="quiz-eyebrow">UNTUK PESERTA</span><h2>Masuk ke ruang kelas</h2><p>Minta kode 6 digit dari host. Gunakan nama panggilan yang mudah dikenali.</p><form id="join-form"><label for="join-pin">Kode ruang</label><input id="join-pin" name="pin" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="123456" autocomplete="off" required><label for="join-name">Nama panggilan</label><input id="join-name" name="name" minlength="2" maxlength="24" placeholder="Contoh: Nara A2" autocomplete="nickname" required><button class="primary" type="submit">Gabung kuis →</button></form></section>
+        <section class="quiz-card"><span class="quiz-eyebrow">UNTUK HOST / DOSEN</span><h2>Pandu kuis bersama</h2><p>Buka lobi, tunggu peserta, lalu mulai. Kamu menentukan kapan kelas beralih ke soal berikutnya.</p><form id="host-form"><label for="quiz-duration">Durasi menjawab</label><select id="quiz-duration"><option value="1">Standar · 25–45 detik</option><option value="2">Santai · 50–90 detik (2×)</option><option value="3">Lebih leluasa · 75–135 detik (3×)</option></select><p class="quiz-muted">Semua peserta mendapat waktu sama. Durasi panjang memberi ruang untuk membaca dan berdiskusi saat pembahasan.</p><button class="secondary" type="submit">Buat ruang Queue</button></form></section>
+      </div>
+      <details class="quiz-rules"><summary>Bagaimana skor, peringkat, dan koneksi bekerja?</summary><p>Jawaban benar mendapat 800 poin + bonus kecepatan 0–200. Salah atau tidak menjawab: 0. Rumus: 800 + round(200 × (1 − waktu respons / batas waktu)). Maksimum 20.000 poin.</p><p>Peringkat diurutkan dari skor tertinggi, jumlah benar terbanyak, lalu total waktu jawaban benar tersingkat. Nilai yang sama berbagi peringkat. Bonus dapat membuat peserta yang lebih cepat mengungguli peserta dengan lebih banyak jawaban benar; akurasi tetap ditampilkan terpisah.</p><p>Jawaban pertama dikunci. Tidak ada pengurangan poin atau bonus streak. Waktu dihitung sampai jawaban diterima server, sehingga koneksi memengaruhi bonus. Soal ditutup saat semua menjawab atau timer habis. Kunci baru dibuka saat pembahasan.</p><p>Gunakan alamat server yang sama. Untuk perangkat berbeda, host menjalankan <code>npm run start:lan</code> dan membagikan alamat IP komputer, bukan localhost. Sesi dapat dilanjutkan setelah refresh pada tab yang sama. Ruang berlaku 3 jam dan hilang jika server dimulai ulang.</p></details>
+      <details class="quiz-rules" id="recover-panel"><summary>Host kehilangan tab? Pulihkan sebagai host</summary><p>Masukkan kode ruang dan kode pemulihan yang ditampilkan saat ruang dibuat. Kode lama tidak lagi berlaku di tab lain.</p><form id="recover-form"><label for="recover-pin">Kode ruang</label><input id="recover-pin" inputmode="numeric" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="123456" autocomplete="off" required><label for="recover-code">Kode pemulihan host</label><input id="recover-code" pattern="[a-f0-9]{48}" minlength="48" maxlength="48" autocomplete="off" required><button class="secondary" type="submit">Pulihkan host</button></form></details>
+    </section>
+    <section id="quiz-session" aria-labelledby="session-title" hidden>
+      <header class="quiz-session-head"><div><span class="quiz-eyebrow" id="session-label">QUEUE LIVE</span><h1 id="session-title" tabindex="-1">Lobi Queue</h1></div><div class="quiz-session-tools"><span id="quiz-connection" class="small-badge" role="status">Menghubungkan…</span><button id="leave-session" class="text-button">Keluar dari tampilan</button></div></header>
+      <div class="quiz-session-meta"><span>Kode ruang <strong id="session-pin"></strong></span><span id="session-roster"></span><span id="session-progress"></span></div>
+      <div id="quiz-stage" class="quiz-card quiz-stage"></div>
+      <div id="quiz-controls" class="quiz-controls"></div>
+      <section id="quiz-ranking" class="quiz-card quiz-ranking" aria-labelledby="ranking-title"><div class="quiz-ranking-head"><h2 id="ranking-title">Leaderboard kelas</h2><span id="my-score" class="small-badge"></span></div><p class="quiz-muted">Skor tertinggi → jumlah benar → waktu jawaban benar. Skor ronde aktif baru muncul saat pembahasan.</p><div class="quiz-table-wrap" tabindex="0" role="region" aria-label="Tabel peringkat, dapat digulir mendatar"><table><caption class="quiz-muted">Peringkat dan akurasi peserta</caption><thead><tr><th scope="col">#</th><th scope="col">Peserta</th><th scope="col">Skor</th><th scope="col">Benar</th><th scope="col">Waktu benar</th></tr></thead><tbody id="quiz-ranking-body"></tbody></table></div></section>
+      <section id="quiz-review" class="quiz-card" aria-labelledby="review-title" hidden><h2 id="review-title">Pembahasan 20 soal</h2><div id="quiz-review-body"></div></section>
+      <p class="quiz-footnote">Hasil ruang disimpan sementara di memori server selama maksimal 3 jam. Host dapat mengunduh CSV setelah 20 soal selesai. Gunakan nama panggilan; semua peserta ruang dapat melihat nama dan peringkat.</p>
+    </section>
+  </main>
+  <dialog id="quiz-confirm" aria-labelledby="confirm-title"><h2 id="confirm-title">Tutup ruang untuk semua?</h2><p>Peserta tidak dapat melanjutkan kuis ini. Setelah selesai, unduh hasil terlebih dahulu.</p><form method="dialog" class="dialog-actions"><button class="secondary" value="cancel" autofocus>Kembali</button><button class="primary" value="close">Tutup ruang</button></form></dialog>
+</body>
+</html>
