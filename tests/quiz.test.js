@@ -223,6 +223,25 @@ test('Durable snapshot restores rooms, resumes tokens and keeps answers after re
   assert.equal(remainingBefore-(hostAfter.expiresAt-clock),3000,'downtime counts against room lifetime');
 });
 
+test('Real scheduler opens the question after the countdown without a manual tick',async t=>{
+  const booted=await boot(t),c=client(booted.url);
+  const host=await c.create(),a=await c.join(host,'Alya');
+  const start=(await c.command(host,'start')).data;assert.equal(start.phase,'countdown');
+  // Only the SSE stream is read here: no request that could advance the phase itself.
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),6000);t.after(()=>{clearTimeout(timeout);controller.abort();});
+  const reader=(await fetch(c.url+c.path(a,'events'),{headers:{Authorization:`Bearer ${a.token}`},signal:controller.signal})).body.getReader();
+  let buffer='',state;
+  while(state?.phase!=='question') {
+    const {value,done}=await reader.read();assert.ok(!done,'stream ended before the question opened');
+    buffer+=new TextDecoder().decode(value);
+    for(const line of buffer.split('\n'))if(line.startsWith('data: '))state=JSON.parse(line.slice(6));
+    buffer=buffer.slice(buffer.lastIndexOf('\n')+1);
+  }
+  controller.abort();
+  assert.ok(state.serverNow>=start.startsAt);assert.ok(state.serverNow-start.startsAt<1000,'scheduler opened the round promptly');
+  assert.equal((await c.answer(a,queueQuiz[0].answer)).data.phase,'review');
+});
+
 test('Round deadlines use the monotonic process clock, not wall-clock jumps',async t=>{
   const booted=await boot(t),c=client(booted.url);
   const host=await c.create();await c.join(host,'Alya');
