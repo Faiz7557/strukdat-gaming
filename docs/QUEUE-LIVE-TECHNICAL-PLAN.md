@@ -204,7 +204,7 @@ Status pembaruan 22 Oktober 2026: P1 origin/host dan trusted proxy, P1 idempoten
 | Prioritas | Pekerjaan | Pemicu / acceptance tambahan | Estimasi terpisah | Status 22 Okt 2026 |
 |---|---|---|---:|---|
 | P1 sebelum publik | Configured origin/host dan trusted proxy, abuse controls | Domain/hosting ditetapkan; cross-origin dan proxy test lulus | 0,5–1 hari | Kode + tes selesai; domain publik belum |
-| P2 keandalan | Perluas uji clock/scheduling pada monotonic timing yang sudah ada | Clock proses tidak tergantung perubahan jam dinding; latensi tetap diukur | 0,5 hari | Terbuka |
+| P2 keandalan | Perluas uji clock/scheduling pada monotonic timing yang sudah ada | Clock proses tidak tergantung perubahan jam dinding; latensi tetap diukur | 0,5 hari | Selesai: tes scheduler nyata membuka soal lewat SSE tanpa tick manual |
 | P1 bila sesi penting | Idempotency create/join dan pemulihan host | Respons hilang tak membuat identitas/room tak terjangkau | 1–2 hari | Selesai; idempotency hanya selama proses hidup |
 | P1 bila hasil wajib tersimpan | Durable storage dan restore state | Restart memulihkan room/answers tepat satu kali | 2–4 hari | Selesai (snapshot JSON); belum database |
 | P2 kapasitas | Profil fan-out, load 60, optimasi snapshot | Metrik menunjukkan batas atau kelas membutuhkan 60 | 1–2 hari | Terbuka; baru 30 SSE sintetis |
@@ -252,3 +252,5 @@ Verifikasi lanjutan 22 Oktober 2026 (setelah origin/host, idempotency, pemulihan
 Penutupan celah tes 22 Oktober 2026:
 - H08 diperluas di `tests/quiz.test.js`: token host dan pemain dari ruang lain ditolak 401 pada state, events, results, command, dan answer. `npm test` → 61/61 lulus (assertion ditambah ke tes yang ada, jumlah tes tetap).
 - `tests/quiz-browser.cjs` kini memuat pemulihan host di browser context baru → PASS dengan `playwright-core` dan Chrome sistem.
+- Tes scheduler nyata (clock monotonic default, tanpa `tick()` manual): stream SSE saja yang dibaca, soal terbuka < 1 detik setelah `startsAt`. `npm test` → 62/62 lulus.
+- Deploy Railway dicoba ulang: `railway init` ditolak "Deploys have been paused due to an upstream issue"; status.railway.com melaporkan "Railway Platform Outage" (Major Outage, 22 Okt 05:20 UTC). Belum ada project/URL.
