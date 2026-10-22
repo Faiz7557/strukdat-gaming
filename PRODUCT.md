@@ -12,7 +12,7 @@ Mahasiswa yang mempelajari materi dan tugas Praktikum 6 Stack serta Praktikum 7 
 
 ## Product Purpose
 
-Simulasi interaktif isometrik yang menghubungkan operasi barang/pasien, node linked-list, dan jejak Python. Pengguna dapat mencoba 10 soal pemula per ruang, bereksperimen, dan menyelesaikan enam level per ruang yang memuat dua misi praktikum.
+Simulasi interaktif isometrik yang menghubungkan operasi barang/pasien, node linked-list, dan jejak Python. Pengguna dapat mencoba 10 soal pemula per ruang, bereksperimen, dan menyelesaikan enam level per ruang yang memuat dua misi praktikum. Queue Live menambahkan 20 soal kompetitif bersama kelas: host memandu ronde serentak, peserta bergabung dengan kode, server menentukan skor dan bonus kecepatan, lalu kelas melihat pembahasan dan leaderboard.
 
 ## Operating Context
 
@@ -21,6 +21,8 @@ Materi sumber adalah PRAKTIKUM 6 Stack.docx dan PRAKTIKUM 7 Queue.docx di direkt
 ## Capabilities and Constraints
 
 Stack memiliki tiga rak, batas berat/jumlah, pencarian, push/pop/peek/isEmpty, dan Stack bantuan. Queue dibuka di FIFO dasar; tiga prioritas tersedia sebagai mode lanjutan, pembatalan pasien menunggu, satu loket dengan pelayanan lima menit, jam manual, estimasi tunggu, dan laporan. Bedah Eksekusi menghubungkan empat operasi dasar dengan cuplikan Python dari dokumen dan rekaman node/referensi yang diambil saat instruksi model JavaScript berjalan. Python bukan interpreter. Rekaman dapat ditelusuri tanpa mengubah arena. Penjelasan algoritma untuk operasi lainnya diberi label berbeda. Data dan progres level berada di memori tab. Enam level per ruang memberi 1–3 bintang terhadap par langkah.
+
+Queue Live memakai server Node standar, POST JSON dan SSE terautentikasi, tanpa paket tambahan. Ruang dibatasi 60 peserta, disimpan di RAM selama maksimal tiga jam, dan memerlukan server yang sama untuk semua perangkat. Perangkat LAN membutuhkan binding --lan; hosting statis tidak menyediakan multiplayer. CSV hasil hanya untuk host; identitas sesi bukan akun terverifikasi. Koneksi putus tidak menghentikan timer. Kuis dibuka di tab baru untuk mempertahankan arena.
 
 ## Brand Commitments
 

@@ -12,7 +12,94 @@ Dari folder ini, jalankan:
 node serve.js
 ```
 
-Buka http://127.0.0.1:5174. Server memakai Node.js standar dan hanya menyediakan berkas aplikasi. Aplikasi memakai ES modules sehingga perlu dibuka melalui server HTTP lokal.
+Buka http://127.0.0.1:5174. Server memakai Node.js standar untuk berkas aplikasi dan API kuis multipemain. Gunakan Node.js 22 atau lebih baru. Aplikasi memakai ES modules sehingga perlu dibuka melalui server HTTP lokal.
+
+## Queue Live · kuis bersama
+
+Di ruang **Queue**, pilih **Buka kuis bersama**. Kuis terbuka di tab baru sehingga arena tetap tersimpan. Halaman kuis juga tersedia di [quiz.html](http://127.0.0.1:5174/quiz.html).
+
+- Host membuat ruang, memilih durasi 1×/2×/3×, lalu membagikan kode 6 digit atau tautan masuk.
+- Peserta memasukkan kode dan nama panggilan sebelum host memulai. Maksimum 60 peserta per ruang, 20 ruang dalam satu proses.
+- 20 soal Queue bertahap: FIFO, enqueue/dequeue/peek/isEmpty, kondisi kosong, pointer, penelusuran operasi, pembatalan, prioritas, dan waktu tunggu.
+- Ronde dimulai serentak setelah hitung mundur 3 detik. Waktu soal 25–45 detik pada durasi standar. Host melanjutkan sesudah pembahasan; ronde berakhir saat semua menjawab atau waktu habis.
+- Jawaban benar mendapat 800 + bonus kecepatan 0–200 poin; salah/tidak menjawab 0. Server mengunci jawaban pertama dan menghitung waktu penerimaan. Skor maksimum 20.000.
+- Peringkat berdasarkan skor, jumlah benar, lalu total waktu jawaban benar. Seri penuh berbagi peringkat. Bonus kecepatan dapat mengungguli selisih akurasi; persentase benar ditampilkan terpisah.
+- Pembahasan dan distribusi jawaban muncul setiap ronde; hasil akhir memuat podium, leaderboard, ulasan pribadi 20 soal, dan CSV kelas khusus host.
+- Refresh tab yang sama memulihkan identitas dan jawaban. Koneksi SSE otomatis dicoba kembali; soal tetap berjalan ketika peserta terputus. Nama dan peringkat terlihat oleh peserta lain, gunakan nama panggilan.
+
+Untuk perangkat berbeda pada jaringan lokal, jalankan:
+
+```powershell
+npm run start:lan
+```
+
+Buka `http://IP-LAN-KOMPUTER-HOST:5174/quiz.html` di **semua** perangkat, termasuk host, sehingga tautan yang disalin memakai alamat yang bisa diakses peserta. Lihat IP melalui `ipconfig`. Firewall perlu mengizinkan Node/port 5174 pada jaringan privat; Wi-Fi dengan isolasi klien dapat menghalangi koneksi. Alamat `localhost`, `127.0.0.1`, dan `0.0.0.0` bukan alamat untuk dibagikan. Variabel `HOST` dan `PORT` dapat mengganti binding/port.
+
+Ruang berlaku maksimal 3 jam sejak dibuat. Jika `QUIZ_DATA_FILE` diatur, ruang dan hash token disimpan ke satu file JSON; setelah crash atau restart, peserta dan host melanjutkan dengan token yang sama dan waktu mati ikut dihitung. Tanpa file itu, ruang hilang saat restart. Unduh CSV setelah selesai. HTTP LAN tidak mengenkripsi token. Hosting statis saja tidak menjalankan kuis bersama. Belum ada akun, database, atau banyak instance.
+
+### Deploy online (satu instance, HTTP di IP VPS)
+
+| Variabel | Fungsi |
+|---|---|
+| `QUIZ_HOSTS` | Host header yang diizinkan, persis seperti dikirim browser (IP VPS, atau domain jika nanti ada; tambahkan port jika bukan 80) |
+| `QUIZ_TRUST_PROXY=1` | Ambil IP klien dari `X-Forwarded-For`; hanya aktif di belakang proxy |
+| `QUIZ_DATA_FILE` | Lokasi snapshot JSON ruang; kosong berarti RAM saja |
+| `HOST`, `PORT` | Alamat bind, default `127.0.0.1:5174` |
+
+**Peringatan:** HTTP mengirim token peserta dan kode pemulihan host tanpa enkripsi. Siapa pun di jalur jaringan dapat membacanya dan merebut peran host. Batasi port 80 ke jaringan kelas (lihat langkah firewall di runbook).
+
+#### Runbook Railway (disarankan, HTTPS otomatis)
+
+Railway memberi URL HTTPS sendiri, jadi tidak perlu domain atau sertifikat. Build memakai `Dockerfile`. Jalankan dari folder `data-structure-lab`:
+
+```bash
+railway login                     # login di browser Anda
+railway init                      # buat project baru
+railway up                        # build dan deploy dari folder ini
+```
+
+Lalu di dashboard Railway, pada service yang dibuat:
+
+1. **Settings → Networking → Generate Domain**. Catat hostname-nya, misalnya `strukdat-quiz.up.railway.app`.
+2. **Variables**, isi:
+   - `QUIZ_HOSTS` = hostname dari langkah 1, tanpa `https://`.
+   - `QUIZ_TRUST_PROXY` = `1`.
+   - `QUIZ_DATA_FILE` = `/data/rooms.json`.
+3. **Volumes → New Volume**, mount path `/data`. Snapshot ruang disimpan di sini.
+4. Redeploy. Cek `https://HOSTNAME/api/quiz/health` harus `{"ok":true}`.
+
+Catatan: jalankan satu replica saja. Volume hanya bisa dipasang ke satu instance. SSE lewat proxy Railway perlu diuji: buka satu ruang dari dua perangkat dan pastikan update fase muncul tanpa tertahan.
+
+#### Runbook VPS (Docker, HTTP)
+
+Prasyarat: VPS Linux dengan Docker dan plugin compose; port 80 terbuka untuk jaringan kelas.
+
+```bash
+cd /opt && git clone https://github.com/Faiz7557/strukdat-gaming.git && cd strukdat-gaming
+echo "QUIZ_HOST=$(curl -s ifconfig.me)" > .env      # IP publik VPS; ganti manual jika berbeda
+docker compose up -d --build
+curl -s "http://$(grep ^QUIZ_HOST= .env | cut -d= -f2)/api/quiz/health"     # harus {"ok":true}
+```
+
+Batasi akses ke jaringan kelas (ganti `203.0.113.0/24` dengan rentang IP kelas atau VPN):
+
+```bash
+sudo ufw allow from 203.0.113.0/24 to any port 80 proto tcp
+sudo ufw deny 80/tcp
+sudo ufw allow OpenSSH && sudo ufw --force enable
+```
+
+Data ruang disimpan di volume `quiz-data`. Peserta membuka `http://IP-VPS/quiz.html`.
+
+Untuk HTTPS nanti (dengan domain): pakai `deploy/nginx.conf.template`, pasang `certbot certonly --standalone`, dan ubah volume proxy di `docker-compose.yml`.
+
+> Repositori GitHub belum berisi file Queue Live (berkas masih untracked). Commit dan push dulu sebelum langkah `git clone`.
+
+Tanpa Docker, jalankan `serve.js` dengan `QUIZ_HOSTS=IP-VPS QUIZ_TRUST_PROXY=1 QUIZ_DATA_FILE=/var/lib/quiz/rooms.json npm start` dan arahkan proxy ke `127.0.0.1:5174`.
+
+Sebelum sesi, cek `http://IP-VPS/api/quiz/health` mengembalikan `{"ok":true}`, lalu uji satu ruang dari dua perangkat. Pastikan proxy tidak menahan SSE. Host yang kehilangan tab dapat memulihkan diri dengan PIN dan kode pemulihan yang ditampilkan di lobi.
+
+Rancangan dan referensi lengkap: [Technical brief](docs/QUEUE-LIVE-TECHNICAL-BRIEF.md), [Technical plan](docs/QUEUE-LIVE-TECHNICAL-PLAN.md), dan [laporan deep research](../reports/Kuis%20Queue%20multipemain.md).
 
 ## Isi simulasi
 
@@ -42,6 +129,10 @@ npm test
 ```
 
 Tes model memeriksa LIFO/FIFO, kondisi kosong, kapasitas dan perpindahan gagal, pemulihan Stack bantuan, pembatalan node, prioritas, pelayanan tanpa interupsi, estimasi tunggu, validasi, dan konsistensi laporan. Tes tambahan memeriksa keadaan node per instruksi, cabang yang dijalankan, snapshot yang tidak berubah, dan kesesuaian rekaman akhir dengan model. Tes view memakai DOM sink di Node untuk memeriksa wiring formulir/tombol, pemilihan baris, escaping, fase transfer, reset, serta replay yang tidak memutasi arena; ini bukan pengujian layout browser.
+
+Tes Queue Live juga membuka server localhost pada port sementara untuk memeriksa otorisasi, state ronde, deadline, penyembunyian kunci/skor aktif, pengiriman ulang idempoten, peringkat seri, TTL, CSV, SSE reconnect, serta 60 peserta sintetis menyelesaikan 20 soal. Jam server disuntikkan agar tes cepat; ini bukan uji 60 perangkat fisik atau benchmark 60 koneksi SSE.
+
+`node tests/quiz-browser.cjs` menjalankan server tes sendiri dan memeriksa host + dua konteks peserta di browser, 20 ronde, refresh jawaban, offline/reconnect, keyboard, escaping nama, unduh CSV, dialog penutupan, dan lebar 320–1440px. Gunakan `PLAYWRIGHT_MODULE`/`BROWSER_EXECUTABLE` seperti tes browser lainnya. Screenshot tersedia di `screenshots/quiz/`.
 
 Dengan Python dan kedua DOCX di folder induk, jalankan `python tests/practicum-parity.py`. Tes ini memastikan empat cuplikan masih cocok dengan dokumen sumber, menjalankan cuplikan Python tersebut, dan membandingkan 12 keadaan/hasil dengan model JavaScript, termasuk kondisi kosong. Python hanya diperlukan untuk tes ini.
 

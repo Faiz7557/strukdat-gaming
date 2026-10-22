@@ -1,0 +1,39 @@
+# Queue Live reverse proxy template. The nginx image renders it with QUIZ_HOST (only QUIZ_* variables are substituted).
+# Certificates: Let's Encrypt live directory for QUIZ_HOST, mounted read-only from the VPS.
+upstream quiz_app {
+  server quiz:5174;
+  keepalive 16;
+}
+
+server {
+  listen 80;
+  server_name ${QUIZ_HOST};
+  return 301 https://$host$request_uri;
+}
+
+server {
+  listen 443 ssl;
+  server_name ${QUIZ_HOST};
+  ssl_certificate     /etc/letsencrypt/live/${QUIZ_HOST}/fullchain.pem;
+  ssl_certificate_key /etc/letsencrypt/live/${QUIZ_HOST}/privkey.pem;
+  ssl_protocols TLSv1.2 TLSv1.3;
+
+  client_max_body_size 8k;
+  add_header Strict-Transport-Security "max-age=31536000" always;
+
+  location / {
+    proxy_pass http://quiz_app;
+    proxy_http_version 1.1;
+    proxy_set_header Connection "";
+    # $http_host keeps the client's port; QUIZ_HOSTS must list the Host exactly as the browser sends it.
+    proxy_set_header Host $http_host;
+    # Appended by nginx: the app reads only the last entry, which nginx wrote from the real socket address.
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    # SSE must reach the browser as it is written; the app also sends X-Accel-Buffering: no.
+    proxy_buffering off;
+    proxy_cache off;
+    proxy_read_timeout 3600s;
+    proxy_send_timeout 3600s;
+  }
+}

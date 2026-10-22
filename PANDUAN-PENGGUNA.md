@@ -23,6 +23,26 @@ Tidak perlu menjalankan `npm install`. Buka aplikasi melalui alamat server terse
 
 ## 2. Mengenali tampilan
 
+### Kuis Queue bersama kelas
+
+Pilih ruang **Queue**, lalu **Buka kuis bersama** di atas arena. Tab baru menjaga eksperimenmu tetap terbuka.
+
+1. **Host:** tekan **Buat ruang Queue**. Durasi standar 25–45 detik per soal; pilihan 2×/3× memberi waktu membaca lebih panjang.
+2. **Bagikan kode:** peserta membuka halaman kuis dari server yang sama, mengisi kode 6 digit dan nama panggilan. Tunggu semua masuk sebelum menekan **Mulai 20 soal**; peserta baru tidak dapat ditambahkan sesudah mulai.
+3. **Jawab bersama:** setelah hitung mundur 3 detik, pilih satu jawaban. Pilihan pertama terkunci. Salah dan tidak menjawab mendapat 0; benar mendapat 800 poin dan bonus kecepatan hingga 200 poin.
+4. **Bahas setiap ronde:** soal ditutup ketika semua sudah menjawab atau timer habis. Kunci, alasan, distribusi jawaban, dan leaderboard tampil bersama. Host menekan **Soal berikutnya** setelah pembahasan.
+5. **Simpan hasil:** sesudah soal ke-20, host menekan **Tampilkan hasil akhir**, kemudian **Unduh hasil kelas (.csv)**. Peserta dapat membaca ulasan pribadi seluruh soal.
+
+Peringkat memakai skor tertinggi, lalu jumlah benar, lalu total waktu jawaban benar paling singkat. Nilai yang sama berbagi peringkat. Bonus memperhitungkan waktu sampai jawaban diterima server, termasuk latensi jaringan. Akurasi ditampilkan terpisah dari skor kompetisi.
+
+Untuk bermain dari beberapa ponsel/laptop, jalankan `npm run start:lan` pada komputer host. Buka `http://IP-LAN-KOMPUTER-HOST:5174/quiz.html` di semua perangkat pada jaringan yang sama. Gunakan IP dari `ipconfig`, bukan localhost atau 0.0.0.0. Firewall jaringan privat dan pengaturan Wi-Fi dapat memengaruhi akses. Petunjuk deployment lengkap tersedia di [README](README.md#queue-live--kuis-bersama).
+
+Jika koneksi putus, biarkan tab tersambung kembali atau refresh **tab yang sama**. Jawaban yang sudah diterima server tidak hilang atau dihitung dua kali. Jika belum terkonfirmasi, gunakan tombol **Kirim ulang pilihan**; jawaban tetap harus tiba sebelum batas waktu. Soal tidak berhenti ketika peserta terputus. **Keluar dari tampilan** tidak menutup ruang; tombol **Kembali ke sesi aktif** memulihkan tampilan.
+
+Ruang berlaku maksimal 3 jam dan hilang saat server dimulai ulang. Gunakan nama panggilan karena nama dan peringkat terlihat oleh kelas. Simpan CSV sebelum host menutup ruang; penutupan ruang berlaku bagi semua peserta.
+
+### Arena dan latihan
+
 ![Tampilan desktop ruang Stack](screenshots/audit/stack-1440-viewport.png)
 
 | Bagian | Kegunaan |

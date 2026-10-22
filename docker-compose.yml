@@ -1,0 +1,24 @@
+services:
+  quiz:
+    build: .
+    restart: unless-stopped
+    environment:
+      QUIZ_HOSTS: ${QUIZ_HOST:?set QUIZ_HOST in .env to the VPS IP or domain}
+      QUIZ_TRUST_PROXY: "1"
+    volumes:
+      - quiz-data:/data
+  proxy:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    depends_on:
+      - quiz
+    environment:
+      QUIZ_HOST: ${QUIZ_HOST:?set QUIZ_HOST in .env to the VPS IP or domain}
+      NGINX_ENVSUBST_FILTER: QUIZ_
+    ports:
+      - "80:80"
+    volumes:
+      # HTTP-only template. For HTTPS with a domain, use deploy/nginx.conf.template and mount /etc/letsencrypt.
+      - ./deploy/nginx-http.conf.template:/etc/nginx/templates/default.conf.template:ro
+volumes:
+  quiz-data:
